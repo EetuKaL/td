@@ -7,6 +7,7 @@ import 'package:flame_tiled/flame_tiled.dart';
 import 'package:td/enemies/enemy.dart';
 import 'package:td/enemies/native.dart';
 import 'package:td/towers/cannons/cannon.dart';
+import 'package:td/utils/debug_line_drawer.dart';
 import 'package:td/utils/td_camera.dart';
 import 'package:td/utils/td_level.dart';
 
@@ -32,6 +33,10 @@ class TDGame extends FlameGame {
       world: world,
     );
 
+    for (final path in level.enemyPaths) {
+      await world.add(DebugLineDrawer(points: path));
+    }
+
     camera = TdCamera.fromMapDetails(
       world,
       canvasSize: NotifyingVector2(canvasSize.x, canvasSize.y),
@@ -51,11 +56,8 @@ class TDGame extends FlameGame {
       repeat: true,
       onTick: () {
         final newEnemy = Native(
-          trajectory:
-              level.enemyPaths[Random().nextIntBetween(
-                0,
-                level.enemyPaths.length - 1,
-              )],
+          path: level
+              .enemyPaths[Random().nextIntBetween(0, level.enemyPaths.length)],
           position: level.enemySpawn,
           size: Vector2.all(32.0),
         );

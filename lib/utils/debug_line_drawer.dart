@@ -9,7 +9,7 @@ class DebugLineDrawer extends Component {
   @override
   void render(Canvas canvas) {
     final paint = Paint()
-      ..color = const Color(0xFFFF0000)
+      ..color = const Color.fromARGB(255, 247, 0, 255)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0;
 

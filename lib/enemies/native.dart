@@ -2,11 +2,8 @@ import 'package:flame/components.dart';
 import 'package:td/enemies/enemy.dart';
 
 class Native extends Enemy {
-  Native({
-    required super.trajectory,
-    required super.position,
-    required super.size,
-  }) : super(hp: 100, speed: 50, range: 10);
+  Native({required super.path, required super.position, required super.size})
+    : super(hp: 100, speed: 50, range: 10);
 
   @override
   Future<void> onLoad() async {
