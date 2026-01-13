@@ -5,7 +5,7 @@ import 'package:flame/extensions.dart';
 import 'package:td/td.dart';
 
 class Enemy extends SpriteAnimationComponent with HasGameReference<TDGame> {
-  final List<Vector2> trajectory;
+  late final List<Vector2> _path;
   final double hp;
   final double speed;
   final double range;
@@ -13,13 +13,14 @@ class Enemy extends SpriteAnimationComponent with HasGameReference<TDGame> {
 
   Enemy({
     super.key,
-    required this.trajectory,
+    required List<Vector2> path,
     required this.hp,
     required this.speed,
     required this.range,
     required Vector2 position,
     required Vector2 size,
   }) : super(position: position, size: size, anchor: Anchor.center) {
+    _path = List.from(path);
     trajectoryOffset = Offset(
       Random().nextDoubleBetween(-32, 32),
       Random().nextDoubleBetween(-32, 32),
@@ -27,19 +28,19 @@ class Enemy extends SpriteAnimationComponent with HasGameReference<TDGame> {
   }
 
   void moveAlongTrajectory(double dt) {
-    if (!isOnRoad() || trajectory.isEmpty) {
+    if (!isOnRoad() || _path.isEmpty) {
       // Handle off-road behavior, e.g., slow down or stop
       return;
     }
     // Logic to move the enemy along its trajectory based on speed and dt
     final offsetAdjusted = Vector2(
-      trajectory.first.x + trajectoryOffset.dx,
-      trajectory.first.y + trajectoryOffset.dy,
+      _path.first.x + trajectoryOffset.dx,
+      _path.first.y + trajectoryOffset.dy,
     );
     final direction = (offsetAdjusted - position).normalized();
     position += direction * speed * dt;
     if ((position - offsetAdjusted).length < range) {
-      trajectory.removeAt(0);
+      _path.removeAt(0);
       // Reached the target point
     }
   }
@@ -70,7 +71,7 @@ class Enemy extends SpriteAnimationComponent with HasGameReference<TDGame> {
 
   @override
   void update(double dt) {
-    if (trajectory.isNotEmpty) {
+    if (_path.isNotEmpty) {
       moveAlongTrajectory(dt);
     }
 
