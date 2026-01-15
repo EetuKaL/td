@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flame/components.dart';
+import 'package:flame/events.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame/game.dart';
 import 'package:flame_tiled/flame_tiled.dart';
@@ -11,13 +12,49 @@ import 'package:td/utils/debug_line_drawer.dart';
 import 'package:td/utils/td_camera.dart';
 import 'package:td/utils/td_level.dart';
 
-class TDGame extends FlameGame {
+class TDGame extends FlameGame with TapCallbacks {
   TDGame() : super();
 
   List<Component> towers = [];
   List<Enemy> enemies = [];
   late final Timer spawnTimer;
   late final TDLevel level;
+
+  final Set<String> _occupiedCells = {};
+
+  String _cellKey(int row, int col) => '$row:$col';
+
+  Vector2 _tapToWorldPosition(TapDownEvent event) {
+    // TapDownEvent provides a position in canvas/screen coordinates.
+    // Convert it to world coordinates so it matches the grid/tile map.
+    return camera.globalToLocal(event.canvasPosition);
+  }
+
+  void _tryPlaceDefaultTowerAt(Vector2 worldPosition) {
+    final index = level.grid.cellIndexFromWorldPosition(worldPosition);
+    if (index == null) {
+      return;
+    }
+
+    if (!level.grid.isCellBuildable(index.row, index.col)) {
+      return;
+    }
+
+    final key = _cellKey(index.row, index.col);
+    if (_occupiedCells.contains(key)) {
+      return;
+    }
+
+    final tower = Cannon(
+      position: level.grid.cellCenter(index.row, index.col),
+      size: Vector2.all(32.0),
+    );
+
+    _occupiedCells.add(key);
+    towers.add(tower);
+    world.add(tower);
+  }
+
   @override
   Future<void> onLoad() async {
     await super.onLoad();
@@ -43,8 +80,10 @@ class TDGame extends FlameGame {
       gameMap: level,
     );
 
+    final startKey = _cellKey(5, 5);
+    _occupiedCells.add(startKey);
     towers.add(
-      Cannon(position: level.grid.cells[5][5], size: Vector2.all(32.0)),
+      Cannon(position: level.grid.cellCenter(5, 5), size: Vector2.all(32.0)),
     );
 
     for (var tower in towers) {
@@ -67,6 +106,13 @@ class TDGame extends FlameGame {
     );
 
     spawnTimer.start();
+  }
+
+  @override
+  void onTapDown(TapDownEvent event) {
+    super.onTapDown(event);
+    final worldPosition = _tapToWorldPosition(event);
+    _tryPlaceDefaultTowerAt(worldPosition);
   }
 
   @override

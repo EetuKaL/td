@@ -1,12 +1,10 @@
-import 'dart:ui';
-
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flame_tiled/flame_tiled.dart' hide Grid;
 import 'package:td/overlays/grid_overlay.dart';
 
 class TDLevel extends Component with HasGameReference {
-  late final MapGrid grid;
+  late final TowerPlacementGrid grid;
   final List<PolygonComponent> offZoneAreas = [];
   late final PolygonComponent road;
   final List<List<Vector2>> enemyPaths = [];
@@ -50,7 +48,7 @@ class TDLevel extends Component with HasGameReference {
       throw Exception('No enemy trajectories found in the map.');
     }
 
-    final grid = MapGrid(
+    final grid = TowerPlacementGrid(
       mapSize: tiledComponent.size.toSize(),
       offZoneAreas: offZoneAreas,
     );
