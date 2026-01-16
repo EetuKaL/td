@@ -46,8 +46,8 @@ class TDGame extends FlameGame with TapCallbacks {
     }
 
     final tower = Cannon(
-      position: level.grid.cellCenter(index.row, index.col),
-      size: Vector2.all(32.0),
+      position: level.grid.cellCenter(index.row, index.col) + Vector2(0, 16),
+      size: Vector2(32.0, 64.0),
     );
 
     _occupiedCells.add(key);
@@ -83,7 +83,10 @@ class TDGame extends FlameGame with TapCallbacks {
     final startKey = _cellKey(5, 5);
     _occupiedCells.add(startKey);
     towers.add(
-      Cannon(position: level.grid.cellCenter(5, 5), size: Vector2.all(32.0)),
+      Cannon(
+        position: level.grid.cellCenter(5, 5) + Vector2(0, 16),
+        size: Vector2(32.0, 64.0),
+      ),
     );
 
     for (var tower in towers) {
