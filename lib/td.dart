@@ -7,7 +7,7 @@ import 'package:flame/game.dart';
 import 'package:flame_tiled/flame_tiled.dart';
 import 'package:td/enemies/enemy.dart';
 import 'package:td/enemies/native.dart';
-import 'package:td/towers/cannons/cannon.dart';
+import 'package:td/towers/ranged/cannon.dart';
 import 'package:td/utils/debug_line_drawer.dart';
 import 'package:td/utils/td_camera.dart';
 import 'package:td/utils/td_level.dart';

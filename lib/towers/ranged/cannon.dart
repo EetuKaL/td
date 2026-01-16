@@ -2,8 +2,8 @@ import 'dart:ui';
 
 import 'package:flame/components.dart';
 import 'package:flame_audio/flame_audio.dart';
-import 'package:td/towers/cannons/tower.dart';
 import 'package:td/towers/projectiles/projectile.dart';
+import 'package:td/towers/tower.dart';
 import 'package:td/utils/sprite_extenstion.dart';
 
 class Cannon extends RangedTower {
