@@ -35,7 +35,7 @@ class Cannon extends RangedTower {
   }
 
   @override
-  Future<Uri> loadattackSound() async {
+  Future<Uri> loadAttackSound() async {
     // Load your specific sound here
     return await FlameAudio.audioCache.load('towers/cannon-1-shoot.wav');
   }
