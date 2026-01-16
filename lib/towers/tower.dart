@@ -1,9 +1,14 @@
+import 'dart:ui';
+
 import 'package:flame/components.dart';
+import 'package:flame/extensions.dart';
 import 'package:flame_audio/flame_audio.dart';
+import 'package:td/enemies/enemy.dart';
 import 'package:td/towers/projectiles/projectile.dart';
 import 'package:td/towers/tower_man/tower_man.dart';
+import 'package:td/utils/debug_beam.dart';
 
-abstract class _Tower extends SpriteComponent {
+abstract class _Tower extends SpriteComponent with HasGameReference {
   /// Distance to spot enemies
   final double spotDistance;
 
@@ -25,7 +30,7 @@ abstract class _Tower extends SpriteComponent {
   Future<void> onLoad() async {
     await super.onLoad();
     sprite = await loadSprite();
-    attackSound = await loadattackSound();
+    attackSound = await loadAttackSound();
   }
 
   Future<Sprite> loadSprite() async {
@@ -33,21 +38,57 @@ abstract class _Tower extends SpriteComponent {
     return await Sprite.load('towers/Tower 01.png');
   }
 
-  /// Override this method in subclasses to provide specific shoot sounds
-  Future<Uri> loadattackSound() async {
+  /// Override this method in subclasses to provide specific attack sounds
+  Future<Uri> loadAttackSound() async {
     // Default implementation - override in subclasses
     return Uri.parse('towers/cannon-1-shoot.wav');
   }
 
-  shoot() {
+  void attack(Vector2 targetPosition) {
     FlameAudio.play(attackSound.path);
+
     // Additional shooting logic here
+  }
+
+  Enemy? findNearestEnemyInRange() {
+    Enemy? best;
+    var bestDistance2 = double.infinity;
+
+    for (final enemy in game.world.children.whereType<Enemy>()) {
+      final d2 = enemy.position.distanceToSquared(position);
+      if (d2 <= spotDistance * spotDistance && d2 < bestDistance2) {
+        best = enemy;
+        bestDistance2 = d2;
+      }
+    }
+
+    return best;
+  }
+
+  @override
+  void render(Canvas canvas) {
+    super.render(canvas);
+
+    final paint = Paint()
+      ..color = const Color(0xFFFF0000)
+      ..strokeWidth = 2.0;
+
+    // Draw the range circle centered on the tower's anchor point.
+    // Note: this is local-space because Flame already transforms the canvas
+    // for this component.
+    final anchorPoint = anchor.toVector2()..multiply(size);
+    canvas.drawCircle(
+      anchorPoint.toOffset(),
+      spotDistance,
+      paint..style = PaintingStyle.stroke,
+    );
   }
 }
 
 class RangedTower extends _Tower {
   final Projectile projectile;
   final double fireRate;
+  double _cooldownLeft = 0;
   RangedTower({
     super.key,
     required this.projectile,
@@ -57,6 +98,29 @@ class RangedTower extends _Tower {
     required super.position,
     required super.size,
   });
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+
+    _cooldownLeft -= dt;
+    if (_cooldownLeft > 0) {
+      return;
+    }
+
+    final target = findNearestEnemyInRange();
+    if (target == null) {
+      return;
+    }
+
+    attack(target.position);
+    game.world.add(
+      DebugBeam(from: position.clone(), to: target.position.clone()),
+    );
+
+    // Interpret fireRate as shots per second.
+    _cooldownLeft = fireRate <= 0 ? 0.5 : (1 / fireRate);
+  }
 }
 
 class MannedTower extends _Tower {
@@ -71,4 +135,6 @@ class MannedTower extends _Tower {
     required this.crew,
     required this.crewCount,
   });
+
+  // Inherit base attack behavior for now.
 }
