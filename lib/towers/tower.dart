@@ -16,7 +16,7 @@ abstract class _Tower extends SpriteComponent with HasGameReference {
   final double turnSpeed;
 
   /// Shoot sound
-  late final Uri attackSound;
+  late final String attackSound;
 
   _Tower({
     super.key,
@@ -39,13 +39,13 @@ abstract class _Tower extends SpriteComponent with HasGameReference {
   }
 
   /// Override this method in subclasses to provide specific attack sounds
-  Future<Uri> loadAttackSound() async {
+  Future<String> loadAttackSound() async {
     // Default implementation - override in subclasses
-    return Uri.parse('towers/cannon-1-shoot.wav');
+    return 'towers/cannon-1-shoot.wav';
   }
 
   void attack(Vector2 targetPosition) {
-    FlameAudio.play(attackSound.path);
+    FlameAudio.play(attackSound);
 
     // Additional shooting logic here
   }
