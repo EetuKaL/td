@@ -6,7 +6,7 @@ import 'package:td/td.dart';
 
 class Enemy extends SpriteAnimationComponent with HasGameReference<TDGame> {
   late final List<Vector2> _path;
-  final double hp;
+  double _hp;
   final double speed;
   final double range;
   late final Offset trajectoryOffset;
@@ -14,13 +14,15 @@ class Enemy extends SpriteAnimationComponent with HasGameReference<TDGame> {
   Enemy({
     super.key,
     required List<Vector2> path,
-    required this.hp,
+    required double hp,
     required this.speed,
     required this.range,
     required Vector2 position,
     required Vector2 size,
-  }) : super(position: position, size: size, anchor: Anchor.center) {
+  }) : _hp = hp,
+       super(position: position, size: size, anchor: Anchor.center) {
     _path = List.from(path);
+
     trajectoryOffset = Offset(
       Random().nextDoubleBetween(-32, 32),
       Random().nextDoubleBetween(-32, 32),
@@ -42,6 +44,13 @@ class Enemy extends SpriteAnimationComponent with HasGameReference<TDGame> {
     if ((position - offsetAdjusted).length < range) {
       _path.removeAt(0);
       // Reached the target point
+    }
+  }
+
+  takeHit(double damage) {
+    _hp -= damage;
+    if (_hp <= 0) {
+      removeFromParent();
     }
   }
 

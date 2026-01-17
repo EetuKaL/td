@@ -80,19 +80,6 @@ class TDGame extends FlameGame with TapCallbacks {
       gameMap: level,
     );
 
-    final startKey = _cellKey(5, 5);
-    _occupiedCells.add(startKey);
-    towers.add(
-      Cannon(
-        position: level.grid.cellCenter(5, 5) + Vector2(0, 16),
-        size: Vector2(32.0, 64.0),
-      ),
-    );
-
-    for (var tower in towers) {
-      await world.add(tower);
-    }
-
     spawnTimer = Timer(
       2,
       repeat: true,
@@ -109,6 +96,19 @@ class TDGame extends FlameGame with TapCallbacks {
     );
 
     spawnTimer.start();
+
+    final startKey = _cellKey(5, 5);
+    _occupiedCells.add(startKey);
+    towers.add(
+      Cannon(
+        position: level.grid.cellCenter(5, 5) + Vector2(0, 16),
+        size: Vector2(32.0, 64.0),
+      ),
+    );
+
+    for (var tower in towers) {
+      await world.add(tower);
+    }
   }
 
   @override
