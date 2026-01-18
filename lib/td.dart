@@ -7,6 +7,7 @@ import 'package:flame/game.dart';
 import 'package:flame_tiled/flame_tiled.dart';
 import 'package:td/enemies/enemy.dart';
 import 'package:td/enemies/native.dart';
+import 'package:td/overlays/tower_options_overlay.dart';
 import 'package:td/towers/ranged/cannon.dart';
 import 'package:td/towers/tower.dart';
 import 'package:td/utils/debug_line_drawer.dart';
@@ -17,8 +18,11 @@ import 'package:td/utils/enemy_spatial_index.dart';
 class TDGame extends FlameGame with TapCallbacks {
   TDGame() : super();
 
-  List<Tower> towers = [];
-  List<Enemy> enemies = [];
+  final List<Tower> towers = [];
+  final List<Enemy> enemies = [];
+
+  /// <Position (row:col), Tower>
+  final Map<String, Tower> _occupiedCells = {};
   late final Timer spawnTimer;
   late final TDLevel level;
 
@@ -45,8 +49,6 @@ class TDGame extends FlameGame with TapCallbacks {
     tower.removeFromParent();
   }
 
-  final Set<String> _occupiedCells = {};
-
   String _cellKey(int row, int col) => '$row:$col';
 
   Vector2 _tapToWorldPosition(TapDownEvent event) {
@@ -55,28 +57,14 @@ class TDGame extends FlameGame with TapCallbacks {
     return camera.globalToLocal(event.canvasPosition);
   }
 
-  void _tryPlaceDefaultTowerAt(Vector2 worldPosition) {
-    final index = level.grid.cellIndexFromWorldPosition(worldPosition);
-    if (index == null) {
-      return;
-    }
-
-    if (!level.grid.isCellBuildable(index.row, index.col)) {
-      return;
-    }
-
-    final key = _cellKey(index.row, index.col);
-    if (_occupiedCells.contains(key)) {
-      return;
-    }
-
+  Tower placeTower(Vector2 worldPosition, int row, int col) {
     final tower = Cannon(
-      position: level.grid.cellCenter(index.row, index.col) + Vector2(0, 16),
+      position: level.grid.cellCenter(row, col) + Vector2(0, 16),
       size: Vector2(32.0, 64.0),
     );
 
-    _occupiedCells.add(key);
     addTower(tower);
+    return tower;
   }
 
   @override
@@ -122,16 +110,52 @@ class TDGame extends FlameGame with TapCallbacks {
     );
 
     spawnTimer.start();
-
-    final startKey = _cellKey(5, 5);
-    _occupiedCells.add(startKey);
   }
 
   @override
   void onTapDown(TapDownEvent event) {
     super.onTapDown(event);
+
+    final overlays = camera.viewport.children.whereType<TowerOptionsOverlay>();
+    final TowerOptionsOverlay? existingOverlay = overlays.isEmpty
+        ? null
+        : overlays.first;
+
     final worldPosition = _tapToWorldPosition(event);
-    _tryPlaceDefaultTowerAt(worldPosition);
+    final index = level.grid.cellIndexFromWorldPosition(worldPosition);
+
+    // If an overlay is open, any tap closes it.
+    // If the tap hits a tower cell, immediately open that tower's overlay.
+    if (existingOverlay != null) {
+      existingOverlay.removeFromParent();
+
+      if (index == null) {
+        return;
+      }
+
+      final key = _cellKey(index.row, index.col);
+      final tower = _occupiedCells[key];
+      if (tower != null) {
+        camera.viewport.add(TowerOptionsOverlay(tower: tower));
+      }
+      return;
+    }
+
+    if (index == null) {
+      return;
+    }
+
+    if (!level.grid.isCellBuildable(index.row, index.col)) {
+      return;
+    }
+    final key = _cellKey(index.row, index.col);
+    final occupiedTower = _occupiedCells[key];
+    if (occupiedTower != null) {
+      camera.viewport.add(TowerOptionsOverlay(tower: occupiedTower));
+    } else {
+      final tower = placeTower(worldPosition, index.row, index.col);
+      _occupiedCells[key] = tower;
+    }
   }
 
   @override
