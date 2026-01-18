@@ -1,119 +1,146 @@
+import 'dart:ui';
+
 import 'package:flame/components.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:td/enemies/enemy.dart';
+import 'package:td/td.dart';
 import 'package:td/towers/manned_tower.dart';
 import 'package:td/towers/ranged_tower.dart';
 import 'package:td/utils/debug_beam.dart';
 
 enum TowerAction { idle, attack }
 
-/// Controllers work as bridge between Tower and the game logic,
+/// Controllers work as bridge between Tower models and the game logic,
 /// for keeping structure scalable and dependencies only injected
-abstract class TowerController extends Component {
-  static AudioPool? _shootPool;
+abstract class TowerController extends Component with HasGameReference<TDGame> {
   TowerAction action;
-  dynamic _actionData;
-  final Vector2 _position;
+  final PositionComponent _positionSource;
   final double _spotDistance;
-  void Function()? _onUpdate;
-  final double _damage;
-  final String attackSound;
+
+  double _cooldownSeconds = 0.0;
+
+  static final Map<String, Future<AudioPool>> _audioPoolFutures = {};
 
   TowerController({
-    required this.attackSound,
     required this.action,
-    required Vector2 position,
+    required PositionComponent positionSource,
     required double spotDistance,
-    required double damage,
-    List<Enemy>? enemies,
-  }) : _position = position,
-       _spotDistance = spotDistance,
-       _damage = damage,
-       _actionData = enemies {
-    assert(action != TowerAction.idle);
-  }
+  }) : _positionSource = positionSource,
+       _spotDistance = spotDistance;
+
+  Vector2 get _worldPosition => _positionSource.position;
+
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    _shootPool ??= await FlameAudio.createPool(attackSound, maxPlayers: 8);
-  }
+    await onControllerLoad();
 
-  @override
-  void update(double dt) {
-    super.update(dt);
     switch (action) {
       case TowerAction.idle:
-        _handleIdle();
+        await onIdleLoad();
         break;
       case TowerAction.attack:
-        final nearestEnemy = _findNearestEnemyInRange(
-          _actionData as List<Enemy>,
-        );
-        if (nearestEnemy != null) {
-          nearestEnemy.takeHit(_damage);
-        }
-        _handleAttack(dt, _actionData as List<Enemy>, nearestEnemy);
+        await onAttackLoad();
         break;
     }
   }
 
-  void actionToAttack(List<Enemy> enemies, Function() attackCallback) {
-    action = TowerAction.attack;
-    _actionData = enemies;
-    FlameAudio.play(attackSound);
-    _onUpdate = attackCallback;
+  Future<void> onControllerLoad() async {}
+
+  Future<void> onIdleLoad() async {}
+
+  Future<void> onAttackLoad() async {}
+
+  void setAction(TowerAction next) {
+    if (action == next) return;
+    final previous = action;
+    action = next;
+    _cooldownSeconds = 0.0;
+    onActionChanged(previous, next);
   }
 
-            final enemies = _actionData;
-            if (enemies is! List<Enemy>) {
-              // Not armed with a target list yet; stay safe.
-              _handleAttack(dt, const <Enemy>[], null);
-              break;
-            }
-            final nearestEnemy = _findNearestEnemyInRange(enemies);
-            _handleAttack(dt, enemies, nearestEnemy);
-    // No-op for now
-    _onUpdate?.call();
+  void onActionChanged(TowerAction previous, TowerAction next) {}
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+
+    final delaySeconds = actionDelaySecondsFor(action);
+
+    if (delaySeconds > 0) {
+      if (_cooldownSeconds > 0) {
+        _cooldownSeconds -= dt;
+        return;
+      }
+      _cooldownSeconds = delaySeconds;
+    }
+
+    switch (action) {
+      case TowerAction.idle:
+        handleIdle(dt);
+        break;
+      case TowerAction.attack:
+        handleAttack(dt);
+        break;
+    }
   }
 
-  void _handleAttack(double dt, List<Enemy> enemies, Enemy? target) {
-    _onUpdate?.call();
-    print("TowerController: Handling attack on target $target");
+  /// Delay (cooldown) between running a given action.
+  ///
+  /// - Return `0.0` to run every frame (no throttling)
+  /// - Return `> 0.0` to run periodically (e.g. fire rate)
+  double actionDelaySecondsFor(TowerAction action) => 0.0;
+
+  /// Override these in subclasses.
+  void handleIdle(double dt) {}
+  void handleAttack(double dt) {}
+
+  Future<AudioPool> loadAudioPool(String assetPath, {int maxPlayers = 8}) {
+    return _audioPoolFutures.putIfAbsent(
+      assetPath,
+      () => FlameAudio.createPool(assetPath, maxPlayers: maxPlayers),
+    );
   }
 
-  Enemy? _findNearestEnemyInRange(List<Enemy> enemies) {
+  Enemy? _findNearestInSpotDistance() {
     Enemy? best;
     var bestDistance2 = double.infinity;
 
-    for (final enemy in enemies) {
-      final d2 = enemy.position.distanceToSquared(_position);
+    final origin = _worldPosition;
+
+    for (final enemy in game.enemyIndex.queryRadius(origin, _spotDistance)) {
+      final d2 = enemy.position.distanceToSquared(origin);
       if (d2 <= _spotDistance * _spotDistance && d2 < bestDistance2) {
         best = enemy;
         bestDistance2 = d2;
       }
     }
-
     return best;
   }
 }
 
 class RangedTowerController extends TowerController {
-  double _coolDown = 0.0;
   final double _fireRate;
+  final String _attackSound;
+  final double _damage;
+  late final AudioPool _shootPool;
+
   RangedTowerController({
     required super.action,
-    required super.attackSound,
-    required super.position,
+    required String attackSound,
+    required super.positionSource,
     required super.spotDistance,
-    required super.damage,
+    required double damage,
     required double fireRate,
-  }) : _fireRate = fireRate;
+  }) : _fireRate = fireRate,
+       _attackSound = attackSound,
+       _damage = damage;
 
   factory RangedTowerController.fromTower(RangedTower tower) {
     return RangedTowerController(
-      action: TowerAction.idle,
+      action: TowerAction.attack,
       attackSound: tower.attackSound,
-      position: tower.position,
+      positionSource: tower,
       spotDistance: tower.spotDistance,
       damage: tower.damage,
       fireRate: tower.fireRate,
@@ -121,38 +148,56 @@ class RangedTowerController extends TowerController {
   }
 
   @override
-  void _handleAttack(double dt, List<Enemy> enemies, Enemy? target) {
-    super._handleAttack(dt, enemies, target);
-    _coolDown -= dt;
-    if (_coolDown <= 0.0 && target != null) {
-      // Fire!
-      target.takeHit(_damage);
-      DebugBeam(
-        from: _position.clone(),
-        to: target.position.clone(),
-      ).addToParent(parent!);
-      // Gun smoking.. better wait a bit.
-      _coolDown = 1.0 / (_fireRate > 0 ? _fireRate : 1.0);
+  Future<void> onControllerLoad() async {
+    await super.onControllerLoad();
+    _shootPool = await loadAudioPool(_attackSound, maxPlayers: 8);
+  }
+
+  @override
+  double actionDelaySecondsFor(TowerAction action) {
+    switch (action) {
+      case TowerAction.attack:
+        return _fireRate;
+      case TowerAction.idle:
+        return 0.0;
     }
+  }
+
+  @override
+  void handleAttack(double dt) {
+    final target = _findNearestInSpotDistance();
+    if (target == null) {
+      return;
+    }
+
+    _shootPool.start();
+
+    game.world.add(
+      DebugBeam(
+        from: _worldPosition.clone(),
+        to: target.position.clone(),
+        color: const Color(0xFFFF0000),
+        strokeWidth: 3,
+        ttlSeconds: 0.5,
+      ),
+    );
+
+    target.takeHit(_damage);
   }
 }
 
 class MannedTowerController extends TowerController {
   MannedTowerController({
-    required super.attackSound,
     required super.action,
-    required super.position,
+    required super.positionSource,
     required super.spotDistance,
-    required super.damage,
   });
 
   factory MannedTowerController.fromTower(MannedTower tower) {
     return MannedTowerController(
       action: TowerAction.idle,
-      attackSound: tower.attackSound,
-      position: tower.position,
+      positionSource: tower,
       spotDistance: tower.spotDistance,
-      damage: tower.damage,
     );
   }
 }

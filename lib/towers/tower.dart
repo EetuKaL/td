@@ -10,7 +10,6 @@ abstract class Tower extends SpriteComponent {
   double get spotDistance => 0.0;
   String get attackSound => 'towers/cannon-1-shoot.wav';
   final TowerController Function(Tower) controllerBuilder;
-
   late final TowerController action;
 
   Tower({

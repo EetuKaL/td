@@ -47,10 +47,16 @@ class Enemy extends SpriteAnimationComponent with HasGameReference<TDGame> {
     }
   }
 
-  takeHit(double damage) {
+  void takeHit(double damage) {
     _hp -= damage;
     if (_hp <= 0) {
-      removeFromParent();
+      // Keep TDGame.enemies in sync with the component tree.
+      // When the enemy is mounted, prefer the game's removal API.
+      if (isMounted) {
+        game.removeEnemy(this);
+      } else {
+        removeFromParent();
+      }
     }
   }
 
