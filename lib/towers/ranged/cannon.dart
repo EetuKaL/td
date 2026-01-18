@@ -21,7 +21,7 @@ class Cannon extends RangedTower {
   Future<Sprite> loadSprite() async {
     // Tower 01.png is a 3-variant sheet: 3 columns, 1 row.
     // Each variant is 64x128 in pixels; we render it scaled in-world.
-    return SpriteExtension.singleFromSpriteSheet(
+    return await SpriteExtension.singleFromSpriteSheet(
       'towers/Tower 01.png',
       rowCount: 1,
       columnCount: 3,
