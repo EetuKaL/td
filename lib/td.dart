@@ -8,17 +8,42 @@ import 'package:flame_tiled/flame_tiled.dart';
 import 'package:td/enemies/enemy.dart';
 import 'package:td/enemies/native.dart';
 import 'package:td/towers/ranged/cannon.dart';
+import 'package:td/towers/tower.dart';
 import 'package:td/utils/debug_line_drawer.dart';
 import 'package:td/utils/td_camera.dart';
 import 'package:td/utils/td_level.dart';
+import 'package:td/utils/enemy_spatial_index.dart';
 
 class TDGame extends FlameGame with TapCallbacks {
   TDGame() : super();
 
-  List<Component> towers = [];
+  List<Tower> towers = [];
   List<Enemy> enemies = [];
   late final Timer spawnTimer;
   late final TDLevel level;
+
+  /// Spatial index used by towers to query nearby enemies.
+  late final EnemySpatialIndex enemyIndex;
+
+  void removeEnemy(Enemy enemy) {
+    enemies.remove(enemy);
+    enemy.removeFromParent();
+  }
+
+  void addEnemy(Enemy enemy) {
+    enemies.add(enemy);
+    world.add(enemy);
+  }
+
+  void addTower(Tower tower) {
+    towers.add(tower);
+    world.add(tower);
+  }
+
+  void removeTower(Tower tower) {
+    towers.remove(tower);
+    tower.removeFromParent();
+  }
 
   final Set<String> _occupiedCells = {};
 
@@ -51,13 +76,15 @@ class TDGame extends FlameGame with TapCallbacks {
     );
 
     _occupiedCells.add(key);
-    towers.add(tower);
-    world.add(tower);
+    addTower(tower);
   }
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+
+    // Maps is createf rom 32x32 tiles
+    enemyIndex = EnemySpatialIndex(cellSize: 64);
 
     final tiledComponent = await TiledComponent.load(
       'testLevel.tmx',
@@ -80,19 +107,6 @@ class TDGame extends FlameGame with TapCallbacks {
       gameMap: level,
     );
 
-    final startKey = _cellKey(5, 5);
-    _occupiedCells.add(startKey);
-    towers.add(
-      Cannon(
-        position: level.grid.cellCenter(5, 5) + Vector2(0, 16),
-        size: Vector2(32.0, 64.0),
-      ),
-    );
-
-    for (var tower in towers) {
-      await world.add(tower);
-    }
-
     spawnTimer = Timer(
       2,
       repeat: true,
@@ -103,12 +117,14 @@ class TDGame extends FlameGame with TapCallbacks {
           position: level.enemySpawn,
           size: Vector2.all(32.0),
         );
-        enemies.add(newEnemy);
-        world.add(newEnemy);
+        addEnemy(newEnemy);
       },
     );
 
     spawnTimer.start();
+
+    final startKey = _cellKey(5, 5);
+    _occupiedCells.add(startKey);
   }
 
   @override
@@ -120,7 +136,10 @@ class TDGame extends FlameGame with TapCallbacks {
 
   @override
   void update(double dt) {
-    super.update(dt);
     spawnTimer.update(dt);
+    super.update(dt);
+
+    // Rebuild after components updated their positions.
+    enemyIndex.rebuild(enemies);
   }
 }

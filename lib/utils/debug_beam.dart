@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:flame/components.dart';
 
-class DebugBeam extends Component {
+class DebugBeam extends PositionComponent {
   final Vector2 from;
   final Vector2 to;
   final Color color;
