@@ -1,15 +1,21 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flame/components.dart';
 import 'package:flame/extensions.dart';
 import 'package:td/td.dart';
+import 'package:td/utils/health_bar.dart';
 
 class Enemy extends SpriteAnimationComponent with HasGameReference<TDGame> {
   late final List<Vector2> _path;
   double _hp;
+  final double _maxHp;
   final double speed;
   final double range;
   late final Offset trajectoryOffset;
+
+  double get hp => _hp;
+  double get maxHp => _maxHp;
 
   Enemy({
     super.key,
@@ -20,6 +26,7 @@ class Enemy extends SpriteAnimationComponent with HasGameReference<TDGame> {
     required Vector2 position,
     required Vector2 size,
   }) : _hp = hp,
+       _maxHp = hp,
        super(position: position, size: size, anchor: Anchor.center) {
     _path = List.from(path);
 
@@ -27,6 +34,12 @@ class Enemy extends SpriteAnimationComponent with HasGameReference<TDGame> {
       Random().nextDoubleBetween(-32, 32),
       Random().nextDoubleBetween(-32, 32),
     );
+  }
+
+  @override
+  FutureOr<void> onLoad() async {
+    await super.onLoad();
+    await add(HealthBar(current: () => hp, max: () => maxHp));
   }
 
   void moveAlongTrajectory(double dt) {
