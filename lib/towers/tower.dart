@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flame/components.dart';
@@ -5,40 +6,58 @@ import 'package:flame/extensions.dart';
 import 'package:td/towers/tower_controller.dart';
 
 abstract class Tower extends SpriteComponent {
-  double get fireRate => 0.0;
-  double get damage => 0.0;
-  double get spotDistance => 0.0;
-  String get attackSound => 'towers/cannon-1-shoot.wav';
+  int _level;
+  final int _towerMaxLevel;
+  final List<double> _damage;
+  double get damage => _damage[min(_level, _damage.length) - 1];
+
+  /// Cooldown between attacks in seconds (lower = faster).
+  final List<double> _fireRate;
+  double get fireRate => _fireRate[min(_level, _fireRate.length) - 1];
+
+  final List<double> _spotDistance;
+  double get spotDistance =>
+      _spotDistance[min(_level, _spotDistance.length) - 1];
+
+  final List<String> _attackSound;
+  String get attackSound => _attackSound[min(_level, _attackSound.length) - 1];
+
   final TowerController Function(Tower) controllerBuilder;
   late final TowerController action;
 
   Tower({
+    required int towerMaxLevel,
+    required List<double> damage,
+    required List<double> fireRate,
+    required List<double> spotDistance,
+    required List<String> attackSound,
+
     required Vector2 position,
     required Vector2 size,
     required this.controllerBuilder,
-  }) : super(position: position, size: size, anchor: Anchor.bottomCenter) {
+
+    int level = 1,
+  }) : _level = level,
+       _towerMaxLevel = towerMaxLevel,
+       _damage = damage,
+       _fireRate = fireRate,
+       _spotDistance = spotDistance,
+       _attackSound = attackSound,
+
+       super(position: position, size: size, anchor: Anchor.bottomCenter) {
     assert(
-      fireRate != 0.0,
-      'fireRate cannot be zero, please override it before use',
-    );
-    assert(
-      spotDistance != 0.0,
-      'spotDistance cannot be zero, please override it before use',
-    );
-    assert(
-      damage != 0.0,
-      'damage cannot be zero, please override it before use',
-    );
-    assert(
-      attackSound.isNotEmpty,
-      'attackSound cannot be empty, please override it before use',
+      damage.length >= 1 &&
+          fireRate.length >= 1 &&
+          spotDistance.length >= 1 &&
+          attackSound.length >= 1,
+      'Stats lists must have at least one entry each.',
     );
   }
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    sprite = await loadSprite();
+    sprite = await loadSpriteForLevel(_level);
     action = controllerBuilder(this);
     await add(action);
   }
@@ -46,6 +65,20 @@ abstract class Tower extends SpriteComponent {
   Future<Sprite> loadSprite() async {
     // Default implementation - override in subclasses
     return await Sprite.load('towers/Tower 01.png');
+  }
+
+  /// Override if the tower has different visuals per level.
+  Future<Sprite> loadSpriteForLevel(int level) async => loadSprite();
+
+  int get level => _level;
+
+  int get towerMaxLevel => _towerMaxLevel;
+
+  bool get isAtMaxLevel => _level >= _towerMaxLevel;
+
+  void levelUp(Sprite evolvedSprite) {
+    _level = level < _towerMaxLevel ? level + 1 : level;
+    sprite = evolvedSprite;
   }
 
   @override
