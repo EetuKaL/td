@@ -15,7 +15,7 @@ enum TowerAction { idle, attack }
 abstract class TowerController extends Component with HasGameReference<TDGame> {
   TowerAction action;
   final PositionComponent _positionSource;
-  final double _spotDistance;
+  final double Function() _spotDistance;
 
   double _cooldownSeconds = 0.0;
 
@@ -24,7 +24,7 @@ abstract class TowerController extends Component with HasGameReference<TDGame> {
   TowerController({
     required this.action,
     required PositionComponent positionSource,
-    required double spotDistance,
+    required double Function() spotDistance,
   }) : _positionSource = positionSource,
        _spotDistance = spotDistance;
 
@@ -107,10 +107,12 @@ abstract class TowerController extends Component with HasGameReference<TDGame> {
     var bestDistance2 = double.infinity;
 
     final origin = _worldPosition;
+    final spotDistance = _spotDistance();
+    final spotDistance2 = spotDistance * spotDistance;
 
-    for (final enemy in game.enemyIndex.queryRadius(origin, _spotDistance)) {
+    for (final enemy in game.enemyIndex.queryRadius(origin, spotDistance)) {
       final d2 = enemy.position.distanceToSquared(origin);
-      if (d2 <= _spotDistance * _spotDistance && d2 < bestDistance2) {
+      if (d2 <= spotDistance2 && d2 < bestDistance2) {
         best = enemy;
         bestDistance2 = d2;
       }
@@ -120,44 +122,39 @@ abstract class TowerController extends Component with HasGameReference<TDGame> {
 }
 
 class RangedTowerController extends TowerController {
-  final double _fireRate;
-  final String _attackSound;
-  final double _damage;
-  late final AudioPool _shootPool;
+  final RangedTower _tower;
+
+  AudioPool? _shootPool;
+  String? _shootPoolAsset;
+  Future<AudioPool>? _shootPoolFuture;
 
   RangedTowerController({
     required super.action,
-    required String attackSound,
     required super.positionSource,
     required super.spotDistance,
-    required double damage,
-    required double fireRate,
-  }) : _fireRate = fireRate,
-       _attackSound = attackSound,
-       _damage = damage;
+    required RangedTower tower,
+  }) : _tower = tower;
 
   factory RangedTowerController.fromTower(RangedTower tower) {
     return RangedTowerController(
       action: TowerAction.attack,
-      attackSound: tower.attackSound,
       positionSource: tower,
-      spotDistance: tower.spotDistance,
-      damage: tower.damage,
-      fireRate: tower.fireRate,
+      spotDistance: () => tower.spotDistance,
+      tower: tower,
     );
   }
 
   @override
   Future<void> onControllerLoad() async {
     await super.onControllerLoad();
-    _shootPool = await loadAudioPool(_attackSound, maxPlayers: 8);
+    await _ensureShootPool();
   }
 
   @override
   double actionDelaySecondsFor(TowerAction action) {
     switch (action) {
       case TowerAction.attack:
-        return _fireRate;
+        return _tower.fireRate;
       case TowerAction.idle:
         return 0.0;
     }
@@ -170,7 +167,10 @@ class RangedTowerController extends TowerController {
       return;
     }
 
-    _shootPool.start();
+    if (_shootPool == null || _shootPoolAsset != _tower.attackSound) {
+      _ensureShootPool();
+    }
+    _shootPool?.start();
 
     game.world.add(
       DebugBeam(
@@ -182,7 +182,23 @@ class RangedTowerController extends TowerController {
       ),
     );
 
-    target.takeHit(_damage);
+    target.takeHit(_tower.damage);
+  }
+
+  Future<void> _ensureShootPool() async {
+    final asset = _tower.attackSound;
+    if (_shootPoolAsset == asset && _shootPool != null) {
+      return;
+    }
+
+    // Avoid stampeding futures if something calls this repeatedly.
+    if (_shootPoolFuture != null && _shootPoolAsset == asset) {
+      return;
+    }
+
+    _shootPoolAsset = asset;
+    _shootPoolFuture = loadAudioPool(asset, maxPlayers: 8);
+    _shootPool = await _shootPoolFuture!;
   }
 }
 
@@ -197,7 +213,7 @@ class MannedTowerController extends TowerController {
     return MannedTowerController(
       action: TowerAction.idle,
       positionSource: tower,
-      spotDistance: tower.spotDistance,
+      spotDistance: () => tower.spotDistance,
     );
   }
 }

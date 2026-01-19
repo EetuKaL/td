@@ -30,8 +30,10 @@ flutter:
   assets:
     - assets/images/towers/
     - assets/images/enemies/
+    - assets/images/hud/level/
     - assets/images/
     - assets/audio/towers/
+    - assets/audio/towers/cannon/
     - assets/tiles/
     - assets/tiles/testLevel/ 
 

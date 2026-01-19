@@ -2,18 +2,57 @@ import 'dart:ui';
 import 'package:flame/camera.dart';
 import 'package:flame/components.dart';
 import 'package:td/towers/tower.dart';
+import 'package:td/overlays/upgrade_level_button.dart';
 
-class TowerOptionsOverlay extends Component with ParentIsA<Viewport> {
+class TowerOptionsOverlay extends PositionComponent with ParentIsA<Viewport> {
   final Tower tower;
   TowerOptionsOverlay({required this.tower});
+
+  static const double panelHeight = 132.0;
+  static const double panelPadding = 16.0;
+
+  late final UpgradeLevelButton _upgradeButton;
+
+  @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+    _upgradeButton = UpgradeLevelButton(tower: tower);
+    await add(_upgradeButton);
+  }
+
+  @override
+  void onMount() {
+    super.onMount();
+    position = Vector2.zero();
+    size = parent.size;
+    anchor = Anchor.topLeft;
+    _layoutChildren();
+  }
+
+  @override
+  void onGameResize(Vector2 gameSize) {
+    super.onGameResize(gameSize);
+    // Viewport size can change when resizing the window.
+    size = parent.size;
+    _layoutChildren();
+  }
+
+  void _layoutChildren() {
+    // Place upgrade button on the right side of the panel.
+    final yTop = size.y - panelHeight;
+    _upgradeButton.position = Vector2(
+      size.x - panelPadding - (_upgradeButton.size.x / 2),
+      yTop + (panelHeight / 2),
+    );
+  }
 
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    final viewportSize = parent.size;
+    final viewportSize = size;
     final paint = Paint()..color = const Color(0xAA000000);
 
-    double height = 132.0;
+    double height = panelHeight;
 
     canvas.drawRect(
       Rect.fromLTWH(0, viewportSize.y - height, viewportSize.x, height),
@@ -21,6 +60,9 @@ class TowerOptionsOverlay extends Component with ParentIsA<Viewport> {
     );
 
     final img = tower.sprite?.toImageSync();
+
+    // Keep this safe for any max level count.
+    final levelLabel = 'Lv ${tower.level}';
 
     if (img != null) {
       canvas.drawImage(img, Offset(16, viewportSize.y - height), paint);
@@ -36,7 +78,7 @@ class TowerOptionsOverlay extends Component with ParentIsA<Viewport> {
                 ),
               )
               ..pushStyle(TextStyle(color: Color(0xFFFFFFFF)))
-              ..addText('Tower: ${tower.runtimeType}'))
+              ..addText('Tower: ${tower.runtimeType} $levelLabel'))
             .build();
 
     typeParagraph.layout(ParagraphConstraints(width: viewportSize.x));
