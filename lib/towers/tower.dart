@@ -10,6 +10,7 @@ abstract class Tower extends SpriteComponent {
   final int _towerMaxLevel;
   final List<double> _damage;
   double get damage => _damage[min(_level, _damage.length) - 1];
+  bool showRadius = false;
 
   /// Cooldown between attacks in seconds (lower = faster).
   final List<double> _fireRate;
@@ -84,6 +85,7 @@ abstract class Tower extends SpriteComponent {
   @override
   void render(Canvas canvas) {
     super.render(canvas);
+    if (!showRadius) return;
 
     final paint = Paint()
       ..color = const Color(0xFFFF0000)
