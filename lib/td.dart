@@ -141,6 +141,7 @@ class TDGame extends FlameGame with TapCallbacks {
     if (builtTower == null &&
         level.grid.isCellBuildable(index!.row, index.col)) {
       final tower = placeTower(worldPosition, index.row, index.col);
+      tower.priority = index.row;
       _occupiedCells[key!] = tower;
     } else if (builtTower != null) {
       builtTower.showRadius = true;
