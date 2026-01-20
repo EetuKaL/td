@@ -7,6 +7,7 @@ import 'package:flame/game.dart';
 import 'package:flame_tiled/flame_tiled.dart';
 import 'package:td/enemies/enemy.dart';
 import 'package:td/enemies/native.dart';
+import 'package:td/overlays/grid_overlay.dart';
 import 'package:td/overlays/tower_options_overlay.dart';
 import 'package:td/towers/ranged/cannon.dart';
 import 'package:td/towers/tower.dart';
@@ -59,7 +60,8 @@ class TDGame extends FlameGame with TapCallbacks {
 
   Tower placeTower(Vector2 worldPosition, int row, int col) {
     final tower = Cannon(
-      position: level.grid.cellCenter(row, col) + Vector2(0, 16),
+      position:
+          level.grid.cellCenter(row, col) + (Vector2(0, gridCellSize / 2)),
       size: Vector2(32.0, 64.0),
     );
 
