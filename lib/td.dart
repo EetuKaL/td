@@ -61,7 +61,8 @@ class TDGame extends FlameGame with TapCallbacks {
   Tower placeTower(Vector2 worldPosition, int row, int col) {
     final tower = Cannon(
       position:
-          level.grid.cellCenter(row, col) + (Vector2(0, gridCellSize / 2)),
+          level.grid.cellCenter(row, col) +
+          (Vector2(0, gridCellSize / (sqrt(gridCellSize) / 2))),
       size: Vector2(32.0, 64.0),
     );
 
@@ -141,7 +142,6 @@ class TDGame extends FlameGame with TapCallbacks {
     if (builtTower == null &&
         level.grid.isCellBuildable(index!.row, index.col)) {
       final tower = placeTower(worldPosition, index.row, index.col);
-      tower.priority = index.row;
       _occupiedCells[key!] = tower;
     } else if (builtTower != null) {
       builtTower.showRadius = true;
