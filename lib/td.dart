@@ -124,37 +124,26 @@ class TDGame extends FlameGame with TapCallbacks {
     final worldPosition = _tapToWorldPosition(event);
     final index = level.grid.cellIndexFromWorldPosition(worldPosition);
 
-    // If an overlay is open, any tap closes it.
-    // If the tap hits a tower cell, immediately open that tower's overlay.
+    final key = index == null ? null : _cellKey(index.row, index.col);
+    final builtTower = _occupiedCells[key];
+
     if (existingOverlay != null) {
+      existingOverlay.tower.showRadius = false;
       existingOverlay.removeFromParent();
 
-      if (index == null) {
+      if (builtTower == existingOverlay.tower) {
         return;
       }
-
-      final key = _cellKey(index.row, index.col);
-      final tower = _occupiedCells[key];
-      if (tower != null) {
-        camera.viewport.add(TowerOptionsOverlay(tower: tower));
-      }
-      return;
     }
 
-    if (index == null) {
-      return;
-    }
-
-    if (!level.grid.isCellBuildable(index.row, index.col)) {
-      return;
-    }
-    final key = _cellKey(index.row, index.col);
-    final occupiedTower = _occupiedCells[key];
-    if (occupiedTower != null) {
-      camera.viewport.add(TowerOptionsOverlay(tower: occupiedTower));
-    } else {
+    if (builtTower == null &&
+        level.grid.isCellBuildable(index!.row, index.col)) {
       final tower = placeTower(worldPosition, index.row, index.col);
-      _occupiedCells[key] = tower;
+      _occupiedCells[key!] = tower;
+    } else if (builtTower != null) {
+      builtTower.showRadius = true;
+      final overlay = TowerOptionsOverlay(tower: builtTower);
+      camera.viewport.add(overlay);
     }
   }
 
