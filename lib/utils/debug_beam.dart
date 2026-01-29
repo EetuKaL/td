@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flame/components.dart';
+import 'package:td/utils/debug_flags.dart';
 
 class DebugBeam extends PositionComponent {
   final Vector2 from;
@@ -19,6 +20,10 @@ class DebugBeam extends PositionComponent {
 
   @override
   void update(double dt) {
+    if (!DebugFlags.enabled) {
+      removeFromParent();
+      return;
+    }
     _timeLeft -= dt;
     if (_timeLeft <= 0) {
       removeFromParent();
@@ -27,6 +32,7 @@ class DebugBeam extends PositionComponent {
 
   @override
   void render(Canvas canvas) {
+    if (!DebugFlags.enabled) return;
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke

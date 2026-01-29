@@ -29,6 +29,7 @@ dev_dependencies:
 flutter:
   assets:
     - assets/images/towers/
+    - assets/images/towers/cannon/
     - assets/images/enemies/
     - assets/images/hud/level/
     - assets/images/

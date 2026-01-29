@@ -105,7 +105,10 @@ class UpgradeLevelButton extends SpriteAnimationComponent
       _upgradeInFlight = true;
 
       () async {
-        await _upgradeTowerTo(targetLevel);
+        if (tower.isAtMaxLevel) {
+          return;
+        }
+        await tower.levelUp();
 
         final shine = _shineByLevel[targetLevel];
         if (shine != null) {
@@ -165,11 +168,6 @@ class UpgradeLevelButton extends SpriteAnimationComponent
     _state = _UpgradeButtonState.idle;
     animation = _idleByLevel[tower.level] ?? _idleByLevel[1];
     animationTicker?.reset();
-  }
-
-  Future<void> _upgradeTowerTo(int nextLevel) async {
-    final evolvedSprite = await tower.loadSpriteForLevel(nextLevel);
-    tower.levelUp(evolvedSprite);
   }
 
   Future<SpriteAnimation> _loadSheetAnimation(
