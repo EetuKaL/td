@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flame/components.dart';
+import 'package:td/utils/debug_flags.dart';
 
 class DebugLineDrawer extends Component {
   final List<Vector2> points;
@@ -8,6 +9,7 @@ class DebugLineDrawer extends Component {
 
   @override
   void render(Canvas canvas) {
+    if (!DebugFlags.enabled) return;
     final paint = Paint()
       ..color = const Color.fromARGB(255, 247, 0, 255)
       ..style = PaintingStyle.stroke

@@ -1,8 +1,9 @@
 import 'dart:ui';
 import 'package:flame/components.dart';
+import 'package:td/utils/debug_flags.dart';
 
 const double gridCellBase = 32.0;
-const double gridCellSize = gridCellBase * 2;
+const double gridCellSize = gridCellBase * 3;
 
 class GridCellIndex {
   final int row;
@@ -69,6 +70,8 @@ class TowerPlacementGrid extends Component {
   @override
   void render(Canvas canvas) {
     super.render(canvas);
+
+    if (!DebugFlags.enabled) return;
 
     final paint = Paint()
       ..style = PaintingStyle.stroke

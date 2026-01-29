@@ -5,24 +5,25 @@ import 'package:flame/events.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame/game.dart';
 import 'package:flame_tiled/flame_tiled.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:td/enemies/enemy.dart';
 import 'package:td/enemies/native.dart';
-import 'package:td/overlays/grid_overlay.dart';
 import 'package:td/overlays/tower_options_overlay.dart';
 import 'package:td/towers/ranged/cannon.dart';
 import 'package:td/towers/tower.dart';
+import 'package:td/utils/debug_flags.dart';
 import 'package:td/utils/debug_line_drawer.dart';
 import 'package:td/utils/td_camera.dart';
 import 'package:td/utils/td_level.dart';
 import 'package:td/utils/enemy_spatial_index.dart';
 
-class TDGame extends FlameGame with TapCallbacks {
+class TDGame extends FlameGame with TapCallbacks, KeyboardEvents {
   TDGame() : super();
 
   final List<Tower> towers = [];
   final List<Enemy> enemies = [];
 
-  /// <Position (row:col), Tower>
   final Map<String, Tower> _occupiedCells = {};
   late final Timer spawnTimer;
   late final TDLevel level;
@@ -50,6 +51,30 @@ class TDGame extends FlameGame with TapCallbacks {
     tower.removeFromParent();
   }
 
+  @override
+  KeyEventResult onKeyEvent(
+    KeyEvent event,
+    Set<LogicalKeyboardKey> keysPressed,
+  ) {
+    if (event is! KeyDownEvent) {
+      return KeyEventResult.ignored;
+    }
+
+    if (event.logicalKey == LogicalKeyboardKey.keyD) {
+      DebugFlags.enabled = !DebugFlags.enabled;
+      return KeyEventResult.handled;
+    }
+
+    if (event.logicalKey == LogicalKeyboardKey.keyT) {
+      if (DebugFlags.enabled) {
+        Tower.cycleDebugOverlay();
+      }
+      return KeyEventResult.handled;
+    }
+
+    return KeyEventResult.ignored;
+  }
+
   String _cellKey(int row, int col) => '$row:$col';
 
   Vector2 _tapToWorldPosition(TapDownEvent event) {
@@ -59,20 +84,22 @@ class TDGame extends FlameGame with TapCallbacks {
   }
 
   Tower placeTower(Vector2 worldPosition, int row, int col) {
-    final tower = Cannon(
-      position:
-          level.grid.cellCenter(row, col) +
-          (Vector2(0, gridCellSize / (sqrt(gridCellSize) / 2))),
-      size: Vector2(32.0, 64.0),
-    );
+    final towerSize = Vector2(128.0, 128.0);
+    final center = level.grid.cellCenter(row, col);
+    final tower = Cannon(position: center, size: towerSize);
+    tower.anchor = tower.placementAnchor;
+    tower.position = center + tower.placementOffset;
 
     addTower(tower);
+
     return tower;
   }
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+
+    Tower.cycleDebugOverlay();
 
     // Maps is createf rom 32x32 tiles
     enemyIndex = EnemySpatialIndex(cellSize: 64);

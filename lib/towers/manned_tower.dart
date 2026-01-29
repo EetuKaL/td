@@ -5,6 +5,8 @@ abstract class MannedTower extends Tower {
   final List<TowerMan> crew;
   final int crewCount;
   MannedTower({
+    required super.name,
+    required super.images,
     required super.towerMaxLevel,
     required super.damage,
     required super.fireRate,
@@ -14,9 +16,12 @@ abstract class MannedTower extends Tower {
     required super.size,
     required this.crew,
     required this.crewCount,
-    required super.controllerBuilder,
     super.level = 1,
   });
 
-  // Inherit base attack behavior for now.
+  void sendTroops() {
+    throw UnimplementedError(
+      'sendTroops must be implemented by concrete MannedTower subclasses.',
+    );
+  }
 }
