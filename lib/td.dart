@@ -83,10 +83,50 @@ class TDGame extends FlameGame with TapCallbacks, KeyboardEvents {
     return camera.globalToLocal(event.canvasPosition);
   }
 
+  double rotateTowardsEnemyPath(Vector2 targetPosition) {
+    // To decide which path segment is "closest", compare distances from the
+    // tower position to the closest point on each segment.
+    //
+    // Use squared distance (`d2`) so we avoid `sqrt`.
+
+    Vector2? bestDir;
+    var bestDistance2 = double.infinity;
+
+    for (final path in level.enemyPaths) {
+      for (var i = 0; i < path.length - 1; i++) {
+        final a = path[i];
+        final b = path[i + 1];
+        // Path line
+        final ab = b - a;
+        if (ab.length2 == 0) continue;
+
+        // From Tower to path start
+        final ap = targetPosition - a;
+
+        var t = ap.dot(ab) / ab.length2;
+        if (t < 0) t = 0;
+        if (t > 1) t = 1;
+        final closestPoint = a + ab * t;
+
+        final candidate = closestPoint.distanceToSquared(targetPosition);
+        if (candidate < bestDistance2) {
+          bestDistance2 = candidate;
+          bestDir = closestPoint - targetPosition;
+        }
+      }
+    }
+    return bestDir!.screenAngle();
+  }
+
   Tower placeTower(Vector2 worldPosition, int row, int col) {
     final towerSize = Vector2(128.0, 128.0);
     final center = level.grid.cellCenter(row, col);
-    final tower = Cannon(position: center, size: towerSize);
+    final rotation = rotateTowardsEnemyPath(center);
+    final tower = Cannon(
+      position: center,
+      size: towerSize,
+      nativeAngle: rotation,
+    );
     tower.anchor = tower.placementAnchor;
     tower.position = center + tower.placementOffset;
 

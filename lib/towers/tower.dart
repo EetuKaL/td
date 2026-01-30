@@ -114,10 +114,9 @@ abstract class Tower extends SpriteComponent {
     required List<double> fireRate,
     required List<double> spotDistance,
     required List<String> attackSound,
-
     required Vector2 position,
     required Vector2 size,
-
+    required super.nativeAngle,
     this.spriteSize,
 
     int level = 1,

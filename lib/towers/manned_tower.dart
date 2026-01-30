@@ -16,6 +16,7 @@ abstract class MannedTower extends Tower {
     required super.size,
     required this.crew,
     required this.crewCount,
+    required super.nativeAngle,
     super.level = 1,
   });
 

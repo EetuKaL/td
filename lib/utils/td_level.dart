@@ -8,6 +8,7 @@ class TDLevel extends Component with HasGameReference {
   final List<PolygonComponent> offZoneAreas = [];
   late final PolygonComponent road;
   final List<List<Vector2>> enemyPaths = [];
+
   late final Vector2 enemySpawn;
   late final NotifyingVector2 size;
 
