@@ -12,6 +12,8 @@ class TDLevel extends Component with HasGameReference {
   late final Vector2 enemySpawn;
   late final NotifyingVector2 size;
 
+  static const scale = 1.5;
+
   static Future<TDLevel> fromTiledComponent({
     required TiledComponent tiledComponent,
     required World world,
@@ -22,6 +24,8 @@ class TDLevel extends Component with HasGameReference {
     final offZoneAreas = <PolygonComponent>[];
     final enemyPaths = <List<Vector2>>[];
 
+    tiledComponent.scale = Vector2.all(scale);
+    tiledComponent.position = Vector2.zero();
     final mapGameObjects = tiledComponent.tileMap.getLayer<ObjectGroup>(
       'gameObjects',
     );
@@ -29,7 +33,12 @@ class TDLevel extends Component with HasGameReference {
       if (obj.name == 'road_area') {
         road = PolygonComponent(
           obj.polygon
-              .map((point) => Vector2(point.x + obj.x, point.y + obj.y))
+              .map(
+                (point) => Vector2(
+                  (point.x + obj.x) * scale,
+                  (point.y + obj.y) * scale,
+                ),
+              )
               .toList(),
         );
 
@@ -40,7 +49,12 @@ class TDLevel extends Component with HasGameReference {
         }
         enemyPaths.add(
           obj.polyline
-              .map((point) => Vector2(point.x + obj.x, point.y + obj.y))
+              .map(
+                (point) => Vector2(
+                  (point.x + obj.x) * scale,
+                  (point.y + obj.y) * scale,
+                ),
+              )
               .toList(),
         );
       }
@@ -50,7 +64,8 @@ class TDLevel extends Component with HasGameReference {
     }
 
     final grid = TowerPlacementGrid(
-      mapSize: tiledComponent.size.toSize(),
+      gridCellSize: scale * 2 * gridCellBase,
+      mapSize: (tiledComponent.size * scale).toSize(),
       offZoneAreas: offZoneAreas,
     );
     await world.addAll([tiledComponent, grid]);
@@ -61,7 +76,7 @@ class TDLevel extends Component with HasGameReference {
       ..road = road
       ..enemyPaths.addAll(enemyPaths)
       ..enemySpawn = enemyPaths[0].first
-      ..size = NotifyingVector2(size.x, size.y);
+      ..size = NotifyingVector2(size.x * scale, size.y * scale);
   }
 
   double getRotationForClosestEnemyPath(Vector2 targetPosition) {

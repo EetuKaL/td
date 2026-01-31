@@ -2,9 +2,6 @@ import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:td/utils/debug_flags.dart';
 
-const double gridCellBase = 32.0;
-const double gridCellSize = gridCellBase * 3;
-
 class GridCellIndex {
   final int row;
   final int col;
@@ -13,16 +10,22 @@ class GridCellIndex {
 }
 
 class TowerPlacementGrid extends Component {
+  static const double gridCellBase = 32.0;
   late final List<List<Vector2>> cellOrigins;
   final List<PolygonComponent> offZoneAreas;
   late final int rowCount;
   late final int colCount;
+  final double gridCellSize;
 
-  TowerPlacementGrid({required Size mapSize, required this.offZoneAreas})
-    : assert(
-        mapSize.width % gridCellBase == 0 && mapSize.height % gridCellBase == 0,
-        'Map size must be divisible by grid cell size',
-      ) {
+  TowerPlacementGrid({
+    required Size mapSize,
+    required this.offZoneAreas,
+    required this.gridCellSize,
+  }) : assert(
+         mapSize.width % gridCellSize == 0 &&
+             mapSize.height % gridCellSize == 0,
+         'Map size must be divisible by grid cell size',
+       ) {
     rowCount = (mapSize.height / gridCellSize).toInt();
     colCount = (mapSize.width / gridCellSize).toInt();
 
