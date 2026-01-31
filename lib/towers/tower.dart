@@ -92,12 +92,6 @@ abstract class Tower extends SpriteComponent {
   final List<String> _attackSound;
   String get attackSound => _attackSound[min(_level, _attackSound.length) - 1];
 
-  /// Anchor to use when placing the tower on the grid.
-  ///
-  /// Default is `Anchor.center`, but individual towers can override if their
-  /// art is visually offset within the sprite.
-  Anchor get placementAnchor => Anchor.center;
-
   /// Additional world-space offset applied when placing on the grid.
   ///
   /// Useful when the PNG art has extra transparent padding or the "visual"
@@ -114,10 +108,9 @@ abstract class Tower extends SpriteComponent {
     required List<double> fireRate,
     required List<double> spotDistance,
     required List<String> attackSound,
-
     required Vector2 position,
     required Vector2 size,
-
+    required super.nativeAngle,
     this.spriteSize,
 
     int level = 1,

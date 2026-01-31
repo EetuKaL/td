@@ -20,6 +20,7 @@ abstract class RangedTower extends Tower with HasGameReference<TDGame> {
     required super.attackSound,
     required super.position,
     required super.size,
+    required super.nativeAngle,
     super.level = 1,
   });
 
@@ -30,12 +31,6 @@ abstract class RangedTower extends Tower with HasGameReference<TDGame> {
   /// Radians-per-second turning speed.
   /// Set to `double.infinity` to snap instantly.
   double get turnSpeed => double.infinity;
-
-  /// Sprite facing offset in radians.
-  ///
-  /// If your art points "up" by default, you may want `-pi / 2`.
-  /// If it points "right" (east), leave `0.0`.
-  double get aimAngleOffset => 0.0;
 
   double _cooldownSeconds = 0.0;
 
@@ -63,7 +58,11 @@ abstract class RangedTower extends Tower with HasGameReference<TDGame> {
 
     final target = findTarget();
     if (target != null) {
-      _rotateTowards(target.position, dt);
+      lookAt(target.position);
+    } else {
+      if (angle != nativeAngle) {
+        angle = nativeAngle;
+      }
     }
 
     if (_cooldownSeconds > 0) {
@@ -81,39 +80,6 @@ abstract class RangedTower extends Tower with HasGameReference<TDGame> {
 
     shoot(target);
     _cooldownSeconds = fireRate;
-  }
-
-  void _rotateTowards(Vector2 targetWorldPosition, double dt) {
-    final origin = position;
-    final dx = targetWorldPosition.x - origin.x;
-    final dy = targetWorldPosition.y - origin.y;
-
-    // Avoid atan2 noise if target is exactly at origin.
-    if (dx == 0 && dy == 0) return;
-
-    final desired = atan2(dy, dx) + aimAngleOffset;
-
-    if (turnSpeed.isInfinite || dt <= 0) {
-      angle = desired;
-      return;
-    }
-
-    final delta = _shortestAngleDelta(angle, desired);
-    final maxStep = turnSpeed * dt;
-    if (delta.abs() <= maxStep) {
-      angle = desired;
-    } else {
-      angle += delta.sign * maxStep;
-    }
-  }
-
-  double _shortestAngleDelta(double from, double to) {
-    var delta = to - from;
-
-    // Wrap into [-pi, pi]
-    delta = (delta + pi) % (2 * pi) - pi;
-    if (delta < -pi) delta += 2 * pi;
-    return delta;
   }
 
   @override

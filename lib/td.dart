@@ -86,8 +86,12 @@ class TDGame extends FlameGame with TapCallbacks, KeyboardEvents {
   Tower placeTower(Vector2 worldPosition, int row, int col) {
     final towerSize = Vector2(128.0, 128.0);
     final center = level.grid.cellCenter(row, col);
-    final tower = Cannon(position: center, size: towerSize);
-    tower.anchor = tower.placementAnchor;
+    final rotation = level.getRotationForClosestEnemyPath(center);
+    final tower = Cannon(
+      position: center,
+      size: towerSize,
+      nativeAngle: rotation,
+    );
     tower.position = center + tower.placementOffset;
 
     addTower(tower);
