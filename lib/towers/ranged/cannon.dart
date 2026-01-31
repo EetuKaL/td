@@ -18,7 +18,7 @@ class Cannon extends RangedTower {
            'towers/cannon/cannon_shoot_2.wav',
          ],
        ) {
-    anchor = Anchor.bottomCenter;
+    anchor = Anchor.center;
   }
 
   @override

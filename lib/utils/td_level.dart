@@ -63,4 +63,36 @@ class TDLevel extends Component with HasGameReference {
       ..enemySpawn = enemyPaths[0].first
       ..size = NotifyingVector2(size.x, size.y);
   }
+
+  double getRotationForClosestEnemyPath(Vector2 targetPosition) {
+    Vector2? bestDir;
+    var bestDistance2 = double.infinity;
+
+    for (final path in enemyPaths) {
+      for (var i = 0; i < path.length - 1; i++) {
+        final a = path[i];
+        final b = path[i + 1];
+        // Path line
+        final ab = b - a;
+        if (ab.length2 == 0) continue;
+
+        // From Tower to path start
+        final ap = targetPosition - a;
+
+        // Get scalar
+        var t = ap.dot(ab) / ab.length2;
+        if (t < 0) t = 0;
+        if (t > 1) t = 1;
+        // Go from point a line ab scalar amount.
+        final closestPoint = a + ab * t;
+
+        final candidate = closestPoint.distanceToSquared(targetPosition);
+        if (candidate < bestDistance2) {
+          bestDistance2 = candidate;
+          bestDir = closestPoint - targetPosition;
+        }
+      }
+    }
+    return bestDir!.screenAngle();
+  }
 }
