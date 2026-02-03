@@ -40,6 +40,10 @@ flutter:
     - assets/images/towers/
     - assets/images/towers/cannon/
     - assets/images/enemies/
+    - assets/images/enemies/zombie/variant_1/
+    - assets/images/enemies/zombie/variant_2/
+    - assets/images/enemies/zombie/variant_3/
+    - assets/images/enemies/zombie/variant_4/
     - assets/images/hud/level/
     - assets/images/
     - assets/audio/towers/
