@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flame/components.dart';
 import 'package:flame/extensions.dart';
@@ -58,10 +57,13 @@ abstract class RangedTower extends Tower with HasGameReference<TDGame> {
 
     final target = findTarget();
     if (target != null) {
-      lookAt(target.position);
+      final dir = target.position - position;
+      if (dir.length2 > 0) {
+        angle = dir.screenAngle();
+      }
     } else {
-      if (angle != nativeAngle) {
-        angle = nativeAngle;
+      if (angle != idleAngle) {
+        angle = idleAngle;
       }
     }
 
