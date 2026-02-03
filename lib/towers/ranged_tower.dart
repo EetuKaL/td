@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flame/components.dart';
 import 'package:flame/extensions.dart';
@@ -59,12 +60,10 @@ abstract class RangedTower extends Tower with HasGameReference<TDGame> {
     if (target != null) {
       final dir = target.position - position;
       if (dir.length2 > 0) {
-        angle = dir.screenAngle();
+        _turnTowards(dir.screenAngle(), dt);
       }
     } else {
-      if (angle != idleAngle) {
-        angle = idleAngle;
-      }
+      _turnTowards(idleAngle, dt);
     }
 
     if (_cooldownSeconds > 0) {
@@ -82,6 +81,42 @@ abstract class RangedTower extends Tower with HasGameReference<TDGame> {
 
     shoot(target);
     _cooldownSeconds = fireRate;
+  }
+
+  void _turnTowards(double targetAngle, double dt) {
+    final speed = turnSpeed;
+    if (speed.isInfinite || speed <= 0 || dt <= 0) {
+      angle = targetAngle;
+      return;
+    }
+
+    final maxDelta = speed * dt;
+    angle = _moveAngleTowards(angle, targetAngle, maxDelta);
+  }
+
+  double _moveAngleTowards(double current, double target, double maxDelta) {
+    final c = _normalizeAngle(current);
+    final t = _normalizeAngle(target);
+    final diff = _normalizeAngle(t - c);
+
+    if (diff.abs() <= maxDelta) {
+      return t;
+    }
+
+    final stepped = c + diff.sign * maxDelta;
+    return _normalizeAngle(stepped);
+  }
+
+  double _normalizeAngle(double radians) {
+    var a = radians;
+    // Normalize to (-pi, pi]
+    while (a <= -math.pi) {
+      a += 2 * math.pi;
+    }
+    while (a > math.pi) {
+      a -= 2 * math.pi;
+    }
+    return a;
   }
 
   @override

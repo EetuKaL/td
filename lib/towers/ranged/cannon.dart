@@ -1,8 +1,13 @@
+import 'dart:math';
+
 import 'package:flame/components.dart';
 import 'package:td/towers/ranged_tower.dart';
 
 class Cannon extends RangedTower {
   static final Vector2 _kSpriteOffset = Vector2(0, -12);
+  static final double _kTurnSpeed = pi / 10; // 18 degrees per second
+  @override
+  double get turnSpeed => _kTurnSpeed;
   Cannon({
     required super.position,
     required super.size,
