@@ -92,7 +92,6 @@ class TDGame extends FlameGame with TapCallbacks, KeyboardEvents {
       size: towerSize,
       nativeAngle: rotation,
     );
-    tower.position = center + tower.placementOffset;
 
     addTower(tower);
 
