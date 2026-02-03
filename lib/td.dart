@@ -9,7 +9,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:td/enemies/enemy.dart';
 import 'package:td/enemies/native.dart';
-import 'package:td/overlays/tower_options_overlay.dart';
 import 'package:td/towers/ranged/cannon.dart';
 import 'package:td/towers/tower.dart';
 import 'package:td/utils/debug_flags.dart';
@@ -18,8 +17,15 @@ import 'package:td/utils/td_camera.dart';
 import 'package:td/utils/td_level.dart';
 import 'package:td/utils/enemy_spatial_index.dart';
 
-class TDGame extends FlameGame with TapCallbacks, KeyboardEvents {
+class TDGame extends FlameGame
+    with TapCallbacks, KeyboardEvents, LongPressDetector {
   TDGame() : super();
+
+  static const String towerOptionsOverlayKey = 'towerOptions';
+
+  final ValueNotifier<Tower?> selectedTowerNotifier = ValueNotifier<Tower?>(
+    null,
+  );
 
   final List<Tower> towers = [];
   final List<Enemy> enemies = [];
@@ -49,6 +55,26 @@ class TDGame extends FlameGame with TapCallbacks, KeyboardEvents {
   void removeTower(Tower tower) {
     towers.remove(tower);
     tower.removeFromParent();
+  }
+
+  void showTowerOptions(Tower tower) {
+    if (selectedTowerNotifier.value == tower &&
+        overlays.isActive(towerOptionsOverlayKey)) {
+      return;
+    }
+
+    // Clear previous selection visuals.
+    selectedTowerNotifier.value?.showRadius = false;
+
+    selectedTowerNotifier.value = tower;
+    tower.showRadius = true;
+    overlays.add(towerOptionsOverlayKey);
+  }
+
+  void hideTowerOptions() {
+    selectedTowerNotifier.value?.showRadius = false;
+    selectedTowerNotifier.value = null;
+    overlays.remove(towerOptionsOverlayKey);
   }
 
   @override
@@ -148,34 +174,26 @@ class TDGame extends FlameGame with TapCallbacks, KeyboardEvents {
   void onTapDown(TapDownEvent event) {
     super.onTapDown(event);
 
-    final overlays = camera.viewport.children.whereType<TowerOptionsOverlay>();
-    final TowerOptionsOverlay? existingOverlay = overlays.isEmpty
-        ? null
-        : overlays.first;
-
     final worldPosition = _tapToWorldPosition(event);
     final index = level.grid.cellIndexFromWorldPosition(worldPosition);
 
     final key = index == null ? null : _cellKey(index.row, index.col);
     final builtTower = _occupiedCells[key];
 
-    if (existingOverlay != null) {
-      existingOverlay.tower.showRadius = false;
-      existingOverlay.removeFromParent();
-
-      if (builtTower == existingOverlay.tower) {
-        return;
-      }
-    }
-
     if (builtTower == null &&
         level.grid.isCellBuildable(index!.row, index.col)) {
+      hideTowerOptions();
       final tower = placeTower(worldPosition, index.row, index.col);
       _occupiedCells[key!] = tower;
     } else if (builtTower != null) {
-      builtTower.showRadius = true;
-      final overlay = TowerOptionsOverlay(tower: builtTower);
-      camera.viewport.add(overlay);
+      if (selectedTowerNotifier.value == builtTower &&
+          overlays.isActive(towerOptionsOverlayKey)) {
+        hideTowerOptions();
+      } else {
+        showTowerOptions(builtTower);
+      }
+    } else {
+      hideTowerOptions();
     }
   }
 
