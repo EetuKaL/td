@@ -1,143 +1,142 @@
-import 'dart:ui';
-import 'package:flame/camera.dart';
-import 'package:flame/components.dart';
-import 'package:td/towers/tower.dart';
-import 'package:td/overlays/upgrade_level_button.dart';
+import 'dart:math' as math;
 
-class TowerOptionsOverlay extends PositionComponent with ParentIsA<Viewport> {
-  final Tower tower;
-  TowerOptionsOverlay({required this.tower});
+import 'package:flutter/material.dart';
+import 'package:flame/sprite.dart';
+import 'package:td/td.dart';
+import 'package:td/towers/tower.dart';
+
+class TowerOptionsOverlay extends StatelessWidget {
+  final TDGame game;
+
+  const TowerOptionsOverlay({required this.game, super.key});
 
   static const double panelHeight = 132.0;
-  static const double panelPadding = 16.0;
-
-  late final UpgradeLevelButton _upgradeButton;
 
   @override
-  Future<void> onLoad() async {
-    await super.onLoad();
-    _upgradeButton = UpgradeLevelButton(tower: tower);
-    await add(_upgradeButton);
-  }
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<Tower?>(
+      valueListenable: game.selectedTowerNotifier,
+      builder: (context, tower, _) {
+        if (tower == null) {
+          return const SizedBox.shrink();
+        }
 
-  @override
-  void onMount() {
-    super.onMount();
-    position = Vector2.zero();
-    size = parent.size;
-    anchor = Anchor.topLeft;
-    _layoutChildren();
-  }
-
-  @override
-  void onGameResize(Vector2 gameSize) {
-    super.onGameResize(gameSize);
-    // Viewport size can change when resizing the window.
-    size = parent.size;
-    _layoutChildren();
-  }
-
-  void _layoutChildren() {
-    // Place upgrade button on the right side of the panel.
-    final yTop = size.y - panelHeight;
-    _upgradeButton.position = Vector2(
-      size.x - panelPadding - (_upgradeButton.size.x / 2),
-      yTop + (panelHeight / 2),
+        return Align(
+          alignment: Alignment.bottomCenter,
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              height: panelHeight,
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(color: Color(0xAA000000)),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _TowerSpritePreview(sprite: tower.sprite),
+                  Expanded(
+                    child: DefaultTextStyle(
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Tower: ${tower.runtimeType} (Lv ${tower.level})',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text('Damage: ${tower.damage}'),
+                          Text('Fire rate: ${tower.fireRate}'),
+                          Text('Spot Distance: ${tower.spotDistance}'),
+                        ],
+                      ),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: tower.isAtMaxLevel
+                        ? null
+                        : () async {
+                            await tower.levelUp();
+                          },
+                    child: Text(tower.isAtMaxLevel ? 'Max' : 'Upgrade'),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: game.hideTowerOptions,
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    tooltip: 'Close',
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
+}
+
+class _TowerSpritePreview extends StatelessWidget {
+  final Sprite? sprite;
+
+  const _TowerSpritePreview({required this.sprite});
 
   @override
-  void render(Canvas canvas) {
-    super.render(canvas);
-    final viewportSize = size;
-    final paint = Paint()..color = const Color(0xAA000000);
+  Widget build(BuildContext context) {
+    const previewSize = 128.0;
 
-    double height = panelHeight;
-
-    canvas.drawRect(
-      Rect.fromLTWH(0, viewportSize.y - height, viewportSize.x, height),
-      paint,
-    );
-
-    final img = tower.sprite?.toImageSync();
-
-    // Keep this safe for any max level count.
-    final levelLabel = 'Lv ${tower.level}';
-
-    if (img != null) {
-      canvas.drawImage(img, Offset(16, viewportSize.y - height), paint);
+    final s = sprite;
+    if (s == null) {
+      return const SizedBox(width: previewSize, height: previewSize);
     }
-    height -= 38.0;
-    final marginLeft = (img?.width ?? 0) + 48.0;
-    final typeParagraph =
-        (ParagraphBuilder(
-                ParagraphStyle(
-                  fontSize: 16,
-                  textAlign: TextAlign.left,
-                  maxLines: 1,
-                ),
-              )
-              ..pushStyle(TextStyle(color: Color(0xFFFFFFFF)))
-              ..addText('Tower: ${tower.runtimeType} $levelLabel'))
-            .build();
 
-    typeParagraph.layout(ParagraphConstraints(width: viewportSize.x));
-    canvas.drawParagraph(
-      typeParagraph,
-      Offset(marginLeft, viewportSize.y - height),
+    return SizedBox(
+      width: previewSize,
+      height: previewSize,
+      child: CustomPaint(painter: _SpritePainter(s)),
     );
-    height -= 24.0;
+  }
+}
 
-    final damageParagraph =
-        (ParagraphBuilder(
-                ParagraphStyle(
-                  fontSize: 16,
-                  textAlign: TextAlign.left,
-                  maxLines: 1,
-                ),
-              )
-              ..pushStyle(TextStyle(color: Color(0xFFFFFFFF)))
-              ..addText('Damage: ${tower.damage}'))
-            .build();
-    damageParagraph.layout(ParagraphConstraints(width: viewportSize.x));
-    canvas.drawParagraph(
-      damageParagraph,
-      Offset(marginLeft, viewportSize.y - height),
-    );
-    height -= 24.0;
+class _SpritePainter extends CustomPainter {
+  final Sprite sprite;
 
-    final fireRateParagraph =
-        (ParagraphBuilder(
-                ParagraphStyle(
-                  fontSize: 16,
-                  textAlign: TextAlign.left,
-                  maxLines: 1,
-                ),
-              )
-              ..pushStyle(TextStyle(color: Color(0xFFFFFFFF)))
-              ..addText('Fire rate: ${tower.fireRate}'))
-            .build();
-    fireRateParagraph.layout(ParagraphConstraints(width: viewportSize.x));
-    canvas.drawParagraph(
-      fireRateParagraph,
-      Offset(marginLeft, viewportSize.y - height),
+  _SpritePainter(this.sprite);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final src = Rect.fromLTWH(
+      sprite.srcPosition.x,
+      sprite.srcPosition.y,
+      sprite.srcSize.x,
+      sprite.srcSize.y,
     );
-    height -= 24.0;
-    final spotDistanceParagraph =
-        (ParagraphBuilder(
-                ParagraphStyle(
-                  fontSize: 16,
-                  textAlign: TextAlign.left,
-                  maxLines: 1,
-                ),
-              )
-              ..pushStyle(TextStyle(color: Color(0xFFFFFFFF)))
-              ..addText('Spot Distance: ${tower.spotDistance}'))
-            .build();
-    spotDistanceParagraph.layout(ParagraphConstraints(width: viewportSize.x));
-    canvas.drawParagraph(
-      spotDistanceParagraph,
-      Offset(marginLeft, viewportSize.y - height),
+
+    final srcW = src.width;
+    final srcH = src.height;
+    if (srcW <= 0 || srcH <= 0) return;
+
+    // Contain the sprite inside the destination box while keeping aspect ratio.
+    final scale = math.min(size.width / srcW, size.height / srcH);
+    final dstW = srcW * scale;
+    final dstH = srcH * scale;
+    final dx = (size.width - dstW) / 2;
+    final dy = (size.height - dstH) / 2;
+    final dst = Rect.fromLTWH(dx, dy, dstW, dstH);
+
+    canvas.drawImageRect(
+      sprite.image,
+      src,
+      dst,
+      Paint()..filterQuality = FilterQuality.none,
     );
+  }
+
+  @override
+  bool shouldRepaint(covariant _SpritePainter oldDelegate) {
+    return oldDelegate.sprite.image != sprite.image ||
+        oldDelegate.sprite.srcPosition != sprite.srcPosition ||
+        oldDelegate.sprite.srcSize != sprite.srcSize;
   }
 }
