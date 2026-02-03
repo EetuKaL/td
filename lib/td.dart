@@ -7,9 +7,9 @@ import 'package:flame/game.dart';
 import 'package:flame_tiled/flame_tiled.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:td/enemies/zombie.dart';
 import 'package:td/state/game_bloc/game_bloc.dart';
 import 'package:td/enemies/enemy.dart';
-import 'package:td/enemies/native.dart';
 import 'package:td/towers/ranged/cannon.dart';
 import 'package:td/towers/tower.dart';
 import 'package:td/utils/debug_beam_data.dart';
@@ -201,11 +201,11 @@ class TDGame extends FlameGame
       2,
       repeat: true,
       onTick: () {
-        final newEnemy = Native(
+        final newEnemy = Zombie(
           path: level
               .enemyPaths[Random().nextIntBetween(0, level.enemyPaths.length)],
           position: level.enemySpawn,
-          size: Vector2.all(32.0),
+          size: Vector2.all(128.0),
         );
         addEnemy(newEnemy);
       },

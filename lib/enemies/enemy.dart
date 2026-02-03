@@ -63,15 +63,28 @@ class Enemy extends SpriteAnimationComponent with HasGameReference<TDGame> {
   void takeHit(double damage) {
     _hp -= damage;
     if (_hp <= 0) {
-      // Keep TDGame.enemies in sync with the component tree.
-      // When the enemy is mounted, prefer the game's removal API.
-      if (isMounted) {
-        game.removeEnemy(this);
-      } else {
-        removeFromParent();
-      }
+      _hp = 0;
+      onKilled();
+    } else {
+      onDamaged(damage);
     }
   }
+
+  void onDamaged(double damage) {}
+
+  void onKilled() => removeNow();
+
+  void removeNow() {
+    // Keep TDGame.enemies in sync with the component tree.
+    // When the enemy is mounted, prefer the game's removal API.
+    if (isMounted) {
+      game.removeEnemy(this);
+    } else {
+      removeFromParent();
+    }
+  }
+
+  bool get canMove => true;
 
   /* Vector2 toNearestPointOnRoad() {
     Vector2? nearestPoint;
@@ -99,7 +112,7 @@ class Enemy extends SpriteAnimationComponent with HasGameReference<TDGame> {
 
   @override
   void update(double dt) {
-    if (_path.isNotEmpty) {
+    if (canMove && _path.isNotEmpty) {
       moveAlongTrajectory(dt);
     }
 
