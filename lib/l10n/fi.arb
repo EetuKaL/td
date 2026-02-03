@@ -1,0 +1,22 @@
+{
+  "@@locale": "fi",
+  "tower": "Torni",
+  "damage": "Vahinko",
+  "fireRate": "Tulinopeus",
+  "spotDistance": "Havaintoetäisyys",
+  "cannon": "Tykki",
+  "towerSelectionTitle": "{towerType} (Taso {level})",
+  "@towerSelectionTitle": {
+    "description": "Title line for the selected tower.",
+    "placeholders": {
+      "towerType": {"type": "String"},
+      "level": {"type": "int"}
+    }
+  },
+  "upgradeTooltip": "Päivitä tasolle {level}",
+  "@upgradeTooltip": {
+    "placeholders": {"level": {"type": "int"}}
+  },
+  "maxLevelTooltip": "Maksimitaso",
+  "closeTooltip": "Sulje"
+}

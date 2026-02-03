@@ -20,7 +20,7 @@ abstract class RangedTower extends Tower with HasGameReference<TDGame> {
   /// Value is in radians. Default is 5 degrees.
   final double turnSpeed;
   RangedTower({
-    required super.name,
+    required super.type,
     required super.images,
     required super.towerMaxLevel,
     required super.damage,

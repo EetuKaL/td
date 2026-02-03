@@ -5,7 +5,7 @@ abstract class MannedTower extends Tower {
   final List<TowerMan> crew;
   final int crewCount;
   MannedTower({
-    required super.name,
+    required super.type,
     required super.images,
     required super.towerMaxLevel,
     required super.damage,

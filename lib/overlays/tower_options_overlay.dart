@@ -3,8 +3,11 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flame/sprite.dart';
+import 'package:td/l10n/generated/app_localizations.dart';
+
 import 'package:td/state/game_bloc/game_bloc.dart';
 import 'package:td/td.dart';
+import 'package:td/towers/tower_type.dart';
 
 class TowerOptionsOverlay extends StatelessWidget {
   final TDGame game;
@@ -17,6 +20,7 @@ class TowerOptionsOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<GameBloc, GameState>(
       builder: (context, state) {
+        final s = S.of(context);
         final tower = state.selectedTower;
         if (tower == null) return const SizedBox.shrink();
 
@@ -41,13 +45,13 @@ class TowerOptionsOverlay extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Tower: ${tower.runtimeType} (Lv ${tower.level})',
+                            '${s.tower}: ${s.towerSelectionTitle(tower.type.localizedName(s), tower.level)}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          Text('Damage: ${tower.damage}'),
-                          Text('Fire rate: ${tower.fireRate}'),
-                          Text('Spot Distance: ${tower.spotDistance}'),
+                          Text('${s.damage}: ${tower.damage}'),
+                          Text('${s.fireRate}: ${tower.fireRate}'),
+                          Text('${s.spotDistance}: ${tower.spotDistance}'),
                         ],
                       ),
                     ),
@@ -62,14 +66,14 @@ class TowerOptionsOverlay extends StatelessWidget {
                           },
                     icon: const Icon(Icons.upgrade, color: Colors.white),
                     tooltip: tower.isAtMaxLevel
-                        ? 'Max level'
-                        : 'Upgrade to Lv ${tower.level + 1}',
+                        ? s.maxLevelTooltip
+                        : s.upgradeTooltip(tower.level + 1),
                   ),
                   const SizedBox(width: 8),
                   IconButton(
                     onPressed: game.hideTowerOptions,
                     icon: const Icon(Icons.close, color: Colors.white),
-                    tooltip: 'Close',
+                    tooltip: s.closeTooltip,
                   ),
                 ],
               ),

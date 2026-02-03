@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flame/components.dart';
 import 'package:td/towers/ranged_tower.dart';
+import 'package:td/towers/tower_type.dart';
 
 class Cannon extends RangedTower {
   static final Vector2 _kSpriteOffset = Vector2(0, -12);
@@ -13,7 +14,7 @@ class Cannon extends RangedTower {
     required super.size,
     required super.nativeAngle,
   }) : super(
-         name: 'Cannon',
+         type: TowerType.cannon,
          images: ['towers/cannon/cannon.png'],
          towerMaxLevel: 3,
          damage: const [25.0, 35.0, 50.0],
