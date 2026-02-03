@@ -7,27 +7,26 @@ import 'package:flame/game.dart';
 import 'package:flame_tiled/flame_tiled.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:td/state/game_bloc/game_bloc.dart';
 import 'package:td/enemies/enemy.dart';
 import 'package:td/enemies/native.dart';
 import 'package:td/towers/ranged/cannon.dart';
 import 'package:td/towers/tower.dart';
+import 'package:td/utils/debug_beam_data.dart';
 import 'package:td/utils/debug_flags.dart';
 import 'package:td/utils/debug_line_drawer.dart';
-import 'package:td/utils/debug_beam_data.dart';
+import 'package:td/utils/enemy_spatial_index.dart';
 import 'package:td/utils/td_camera.dart';
 import 'package:td/utils/td_level.dart';
-import 'package:td/utils/enemy_spatial_index.dart';
 
 class TDGame extends FlameGame
     with TapCallbacks, KeyboardEvents, LongPressDetector {
-  TDGame() : super();
+  TDGame({required this.gameBloc}) : super();
 
   static const String towerOptionsOverlayKey = 'towerOptions';
   static const String debugOverlayKey = 'debugOverlay';
 
-  final ValueNotifier<Tower?> selectedTowerNotifier = ValueNotifier<Tower?>(
-    null,
-  );
+  final GameBloc gameBloc;
 
   final List<Tower> towers = [];
   final List<Enemy> enemies = [];
@@ -59,26 +58,36 @@ class TDGame extends FlameGame
   void removeTower(Tower tower) {
     towers.remove(tower);
     tower.removeFromParent();
+
+    if (gameBloc.state.selectedTower == tower) {
+      tower.showRadius = false;
+      gameBloc.add(const TowerSelect(null));
+    }
   }
 
   void showTowerOptions(Tower tower) {
-    if (selectedTowerNotifier.value == tower &&
-        overlays.isActive(towerOptionsOverlayKey)) {
-      return;
-    }
-
-    // Clear previous selection visuals.
-    selectedTowerNotifier.value?.showRadius = false;
-
-    selectedTowerNotifier.value = tower;
-    tower.showRadius = true;
-    overlays.add(towerOptionsOverlayKey);
+    _setSelectedTower(tower);
   }
 
   void hideTowerOptions() {
-    selectedTowerNotifier.value?.showRadius = false;
-    selectedTowerNotifier.value = null;
-    overlays.remove(towerOptionsOverlayKey);
+    _setSelectedTower(null);
+  }
+
+  void _setSelectedTower(Tower? tower) {
+    final previous = gameBloc.state.selectedTower;
+
+    if (previous == tower) {
+      // Toggle off if the user taps the same tower again.
+      if (tower != null) {
+        tower.showRadius = false;
+        gameBloc.add(const TowerSelect(null));
+      }
+      return;
+    }
+
+    previous?.showRadius = false;
+    tower?.showRadius = true;
+    gameBloc.add(TowerSelect(tower));
   }
 
   void addDebugBeam({
@@ -149,7 +158,6 @@ class TDGame extends FlameGame
     tower.angle = rotation;
 
     addTower(tower);
-
     return tower;
   }
 
@@ -159,11 +167,13 @@ class TDGame extends FlameGame
 
     Tower.cycleDebugOverlay();
 
+    // Keep the overlay mounted; bloc selection controls visibility.
+    overlays.add(towerOptionsOverlayKey, priority: 2);
+
     if (DebugFlags.enabled) {
       overlays.add(debugOverlayKey);
     }
 
-    // Maps is createf rom 32x32 tiles
     enemyIndex = EnemySpatialIndex(cellSize: 64);
 
     final tiledComponent = await TiledComponent.load(
@@ -211,24 +221,28 @@ class TDGame extends FlameGame
     final worldPosition = _tapToWorldPosition(event);
     final index = level.grid.cellIndexFromWorldPosition(worldPosition);
 
-    final key = index == null ? null : _cellKey(index.row, index.col);
+    if (index == null) {
+      hideTowerOptions();
+      return;
+    }
+
+    final key = _cellKey(index.row, index.col);
     final builtTower = _occupiedCells[key];
 
     if (builtTower == null &&
-        level.grid.isCellBuildable(index!.row, index.col)) {
+        level.grid.isCellBuildable(index.row, index.col)) {
       hideTowerOptions();
       final tower = placeTower(worldPosition, index.row, index.col);
-      _occupiedCells[key!] = tower;
-    } else if (builtTower != null) {
-      if (selectedTowerNotifier.value == builtTower &&
-          overlays.isActive(towerOptionsOverlayKey)) {
-        hideTowerOptions();
-      } else {
-        showTowerOptions(builtTower);
-      }
-    } else {
-      hideTowerOptions();
+      _occupiedCells[key] = tower;
+      return;
     }
+
+    if (builtTower != null) {
+      showTowerOptions(builtTower);
+      return;
+    }
+
+    hideTowerOptions();
   }
 
   @override
@@ -243,7 +257,6 @@ class TDGame extends FlameGame
       });
     }
 
-    // Rebuild after components updated their positions.
     enemyIndex.rebuild(enemies);
   }
 }

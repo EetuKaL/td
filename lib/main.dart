@@ -1,31 +1,40 @@
-import 'dart:isolate';
-
 import 'package:flame/game.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:td/state/game_bloc/game_bloc.dart';
 import 'package:td/overlays/debug_overlay.dart';
 import 'package:td/overlays/tower_options_overlay.dart';
 import 'package:td/td.dart';
 
-void _isolateMain(RootIsolateToken rootIsolateToken) async {
-  BackgroundIsolateBinaryMessenger.ensureInitialized(rootIsolateToken);
+void main() {
+  runApp(const _TDApp());
 }
 
-void main() {
-  RootIsolateToken rootIsolateToken = RootIsolateToken.instance!;
-  Isolate.spawn(_isolateMain, rootIsolateToken);
+class _TDApp extends StatelessWidget {
+  const _TDApp();
 
-  runApp(
-    MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: GameWidget<TDGame>.controlled(
-        gameFactory: TDGame.new,
-        overlayBuilderMap: {
-          TDGame.towerOptionsOverlayKey: (context, game) =>
-              TowerOptionsOverlay(game: game),
-          TDGame.debugOverlayKey: (context, game) => DebugOverlay(game: game),
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => GameBloc(),
+      child: Builder(
+        builder: (context) {
+          final game = TDGame(gameBloc: context.read<GameBloc>());
+
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            home: GameWidget<TDGame>.controlled(
+              gameFactory: () => game,
+              overlayBuilderMap: {
+                TDGame.towerOptionsOverlayKey: (context, game) =>
+                    TowerOptionsOverlay(game: game),
+                TDGame.debugOverlayKey: (context, game) =>
+                    DebugOverlay(game: game),
+              },
+            ),
+          );
         },
       ),
-    ),
-  );
+    );
+  }
 }
