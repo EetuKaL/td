@@ -68,7 +68,7 @@ class TDLevel extends Component with HasGameReference {
       mapSize: (tiledComponent.size * scale).toSize(),
       offZoneAreas: offZoneAreas,
     );
-    await world.addAll([tiledComponent, grid]);
+    await world.add(tiledComponent);
 
     return TDLevel()
       ..grid = grid

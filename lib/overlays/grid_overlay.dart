@@ -1,6 +1,6 @@
 import 'dart:ui';
+
 import 'package:flame/components.dart';
-import 'package:td/utils/debug_flags.dart';
 
 class GridCellIndex {
   final int row;
@@ -9,7 +9,7 @@ class GridCellIndex {
   const GridCellIndex(this.row, this.col);
 }
 
-class TowerPlacementGrid extends Component {
+class TowerPlacementGrid {
   static const double gridCellBase = 32.0;
   late final List<List<Vector2>> cellOrigins;
   final List<PolygonComponent> offZoneAreas;
@@ -68,36 +68,5 @@ class TowerPlacementGrid extends Component {
 
   bool isCellBuildable(int row, int col) {
     return !isCellInOffZone(row, col);
-  }
-
-  @override
-  void render(Canvas canvas) {
-    super.render(canvas);
-
-    if (!DebugFlags.enabled) return;
-
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-
-    for (var row = 0; row < rowCount; row++) {
-      for (var col = 0; col < colCount; col++) {
-        final origin = cellOrigins[row][col];
-        final rect = Rect.fromLTWH(
-          origin.x,
-          origin.y,
-          gridCellSize,
-          gridCellSize,
-        );
-
-        final isInOffZone = isCellInOffZone(row, col);
-
-        paint.color = isInOffZone
-            ? const Color.fromARGB(239, 238, 7, 7)
-            : const Color.fromARGB(242, 0, 255, 0);
-
-        canvas.drawRect(rect, paint);
-      }
-    }
   }
 }

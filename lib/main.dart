@@ -3,6 +3,7 @@ import 'dart:isolate';
 import 'package:flame/game.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
+import 'package:td/overlays/debug_overlay.dart';
 import 'package:td/overlays/tower_options_overlay.dart';
 import 'package:td/td.dart';
 
@@ -22,6 +23,7 @@ void main() {
         overlayBuilderMap: {
           TDGame.towerOptionsOverlayKey: (context, game) =>
               TowerOptionsOverlay(game: game),
+          TDGame.debugOverlayKey: (context, game) => DebugOverlay(game: game),
         },
       ),
     ),
