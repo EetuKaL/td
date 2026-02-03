@@ -31,6 +31,10 @@ flutter:
     - assets/images/towers/
     - assets/images/towers/cannon/
     - assets/images/enemies/
+    - assets/images/enemies/zombie_walker/1/
+    - assets/images/enemies/zombie_walker/2/
+    - assets/images/enemies/zombie_walker/3/
+    - assets/images/enemies/zombie_walker/4/
     - assets/images/hud/level/
     - assets/images/
     - assets/audio/towers/
