@@ -92,6 +92,12 @@ abstract class Tower extends SpriteComponent {
   final List<String> _attackSound;
   String get attackSound => _attackSound[min(_level, _attackSound.length) - 1];
 
+  /// The rotation used when the tower has no target.
+  ///
+  /// This is separate from Flame's `nativeAngle` (which describes sprite art
+  /// orientation for helper methods like `lookAt`).
+  double idleAngle = 0.0;
+
   /// Local-space offset applied only when rendering the sprite.
   ///
   /// This lets you tune per-sprite alignment without affecting gameplay logic
