@@ -32,6 +32,14 @@ abstract class RangedTower extends Tower with HasGameReference<TDGame> {
   /// Set to `double.infinity` to snap instantly.
   double get turnSpeed => double.infinity;
 
+  /// How closely the tower must be aimed at the target before it can shoot.
+  ///
+  /// With finite [turnSpeed], this prevents shooting "through the back" while
+  /// the sprite is still rotating.
+  ///
+  /// Value is in radians. Default is 5 degrees.
+  double get aimTolerance => 5 * math.pi / 180;
+
   double _cooldownSeconds = 0.0;
 
   AudioPool? _shootPool;
@@ -57,10 +65,20 @@ abstract class RangedTower extends Tower with HasGameReference<TDGame> {
     _updateShootAnimation(dt);
 
     final target = findTarget();
+
+    // Track desired aim so we can gate firing when turn speed is finite.
+    double? desiredAimAngle;
+    var isTargetExactlyOnTower = false;
+
     if (target != null) {
       final dir = target.position - position;
       if (dir.length2 > 0) {
-        _turnTowards(dir.screenAngle(), dt);
+        desiredAimAngle = dir.screenAngle();
+        _turnTowards(desiredAimAngle, dt);
+      } else {
+        // Same position: direction is undefined, but we should still allow
+        // shooting.
+        isTargetExactlyOnTower = true;
       }
     } else {
       _turnTowards(idleAngle, dt);
@@ -72,6 +90,13 @@ abstract class RangedTower extends Tower with HasGameReference<TDGame> {
     }
 
     if (target == null) return;
+
+    // If the enemy has a defined direction, only shoot when we're aimed.
+    if (!isTargetExactlyOnTower && desiredAimAngle != null) {
+      if (!_isAimedAt(desiredAimAngle)) {
+        return;
+      }
+    }
 
     // Ensure audio pool is ready (non-async update loop).
     if (_shootPool == null || _shootPoolAsset != attackSound) {
@@ -117,6 +142,15 @@ abstract class RangedTower extends Tower with HasGameReference<TDGame> {
       a -= 2 * math.pi;
     }
     return a;
+  }
+
+  bool _isAimedAt(double targetAngle) {
+    final tolerance = aimTolerance;
+    if (tolerance.isNaN || tolerance.isNegative) {
+      return true;
+    }
+    final diff = _normalizeAngle(_normalizeAngle(targetAngle) - angle);
+    return diff.abs() <= tolerance;
   }
 
   @override
