@@ -13,6 +13,7 @@ import 'package:td/towers/ranged/cannon.dart';
 import 'package:td/towers/tower.dart';
 import 'package:td/utils/debug_flags.dart';
 import 'package:td/utils/debug_line_drawer.dart';
+import 'package:td/utils/debug_beam_data.dart';
 import 'package:td/utils/td_camera.dart';
 import 'package:td/utils/td_level.dart';
 import 'package:td/utils/enemy_spatial_index.dart';
@@ -22,6 +23,7 @@ class TDGame extends FlameGame
   TDGame() : super();
 
   static const String towerOptionsOverlayKey = 'towerOptions';
+  static const String debugOverlayKey = 'debugOverlay';
 
   final ValueNotifier<Tower?> selectedTowerNotifier = ValueNotifier<Tower?>(
     null,
@@ -33,6 +35,8 @@ class TDGame extends FlameGame
   final Map<String, Tower> _occupiedCells = {};
   late final Timer spawnTimer;
   late final TDLevel level;
+
+  final List<DebugBeamData> debugBeams = [];
 
   /// Spatial index used by towers to query nearby enemies.
   late final EnemySpatialIndex enemyIndex;
@@ -77,6 +81,25 @@ class TDGame extends FlameGame
     overlays.remove(towerOptionsOverlayKey);
   }
 
+  void addDebugBeam({
+    required Vector2 from,
+    required Vector2 to,
+    double ttlSeconds = 0.12,
+    Color color = const Color.fromARGB(255, 247, 0, 255),
+    double strokeWidth = 2.0,
+  }) {
+    if (!DebugFlags.enabled) return;
+    debugBeams.add(
+      DebugBeamData(
+        from: from.clone(),
+        to: to.clone(),
+        timeLeftSeconds: ttlSeconds,
+        color: color,
+        strokeWidth: strokeWidth,
+      ),
+    );
+  }
+
   @override
   KeyEventResult onKeyEvent(
     KeyEvent event,
@@ -88,6 +111,13 @@ class TDGame extends FlameGame
 
     if (event.logicalKey == LogicalKeyboardKey.keyD) {
       DebugFlags.enabled = !DebugFlags.enabled;
+
+      if (DebugFlags.enabled) {
+        overlays.add(debugOverlayKey);
+      } else {
+        overlays.remove(debugOverlayKey);
+      }
+
       return KeyEventResult.handled;
     }
 
@@ -128,6 +158,10 @@ class TDGame extends FlameGame
     await super.onLoad();
 
     Tower.cycleDebugOverlay();
+
+    if (DebugFlags.enabled) {
+      overlays.add(debugOverlayKey);
+    }
 
     // Maps is createf rom 32x32 tiles
     enemyIndex = EnemySpatialIndex(cellSize: 64);
@@ -201,6 +235,13 @@ class TDGame extends FlameGame
   void update(double dt) {
     spawnTimer.update(dt);
     super.update(dt);
+
+    if (debugBeams.isNotEmpty) {
+      debugBeams.removeWhere((b) {
+        b.timeLeftSeconds -= dt;
+        return b.timeLeftSeconds <= 0;
+      });
+    }
 
     // Rebuild after components updated their positions.
     enemyIndex.rebuild(enemies);

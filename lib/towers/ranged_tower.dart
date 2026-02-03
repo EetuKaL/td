@@ -7,7 +7,6 @@ import 'package:flame_audio/flame_audio.dart';
 import 'package:td/enemies/enemy.dart';
 import 'package:td/td.dart';
 import 'package:td/towers/tower.dart';
-import 'package:td/utils/debug_beam.dart';
 
 abstract class RangedTower extends Tower with HasGameReference<TDGame> {
   // How much aim can be off
@@ -57,6 +56,8 @@ abstract class RangedTower extends Tower with HasGameReference<TDGame> {
     _rebuildShootFrames();
     await _ensureShootPool();
   }
+
+  
 
   @override
   void update(double dt) {
@@ -168,14 +169,12 @@ abstract class RangedTower extends Tower with HasGameReference<TDGame> {
     _startShootAnimation();
     _shootPool?.start();
 
-    game.world.add(
-      DebugBeam(
-        from: position.clone(),
-        to: target.position.clone(),
-        color: const Color(0xFFFF0000),
-        strokeWidth: 3,
-        ttlSeconds: 0.5,
-      ),
+    game.addDebugBeam(
+      from: position,
+      to: target.position,
+      color: const Color(0xFFFF0000),
+      strokeWidth: 3,
+      ttlSeconds: 0.5,
     );
 
     target.takeHit(damage);
