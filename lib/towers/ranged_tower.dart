@@ -10,6 +10,16 @@ import 'package:td/towers/tower.dart';
 import 'package:td/utils/debug_beam.dart';
 
 abstract class RangedTower extends Tower with HasGameReference<TDGame> {
+  // How much aim can be off
+  final double aimTolerance;
+
+  /// How closely the tower must be aimed at the target before it can shoot.
+  ///
+  /// With finite [turnSpeed], this prevents shooting "through the back" while
+  /// the sprite is still rotating.
+  ///
+  /// Value is in radians. Default is 5 degrees.
+  final double turnSpeed;
   RangedTower({
     required super.name,
     required super.images,
@@ -22,23 +32,13 @@ abstract class RangedTower extends Tower with HasGameReference<TDGame> {
     required super.size,
     required super.nativeAngle,
     super.level = 1,
+    this.aimTolerance = 5 * math.pi / 180,
+    this.turnSpeed = double.infinity,
   });
 
   /// Seconds per animation frame while shooting.
   /// Override to speed up/slow down attack animation.
   double get shootFrameSeconds => 1 / 20;
-
-  /// Radians-per-second turning speed.
-  /// Set to `double.infinity` to snap instantly.
-  double get turnSpeed => double.infinity;
-
-  /// How closely the tower must be aimed at the target before it can shoot.
-  ///
-  /// With finite [turnSpeed], this prevents shooting "through the back" while
-  /// the sprite is still rotating.
-  ///
-  /// Value is in radians. Default is 5 degrees.
-  double get aimTolerance => 5 * math.pi / 180;
 
   double _cooldownSeconds = 0.0;
 
