@@ -6,6 +6,7 @@ import 'package:flame/components.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame/flame.dart';
 import 'package:flame/sprite.dart';
+import 'package:td/towers/tower_type.dart';
 import 'package:td/utils/debug_flags.dart';
 
 abstract class Tower extends SpriteComponent {
@@ -31,8 +32,11 @@ abstract class Tower extends SpriteComponent {
   static final Map<String, Rect> _opaqueUnitRectCache = {};
   static final Map<String, Future<Rect>> _opaqueUnitRectFutureCache = {};
 
-  /// Should be localized name of the tower.
-  final String name;
+  /// Stable tower identifier (use this for localization).
+  final TowerType type;
+
+  /// Backwards-compatible identifier; do not use for UI.
+  String get name => type.name;
 
   /// Image assets paths for different levels.
   final List<String> images;
@@ -108,7 +112,7 @@ abstract class Tower extends SpriteComponent {
   Vector2 get spriteOffset => Vector2.zero();
 
   Tower({
-    required this.name,
+    required this.type,
     required this.images,
     required int towerMaxLevel,
     required List<double> damage,

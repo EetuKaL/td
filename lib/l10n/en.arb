@@ -1,0 +1,23 @@
+{
+  "@@locale": "en",
+
+  "tower": "Tower",
+  "damage": "Damage",
+  "fireRate": "Fire rate",
+  "spotDistance": "Spot distance",
+  "cannon": "Cannon",
+  "towerSelectionTitle": "{towerType} (Lv {level})",
+  "@towerSelectionTitle": {
+    "description": "Title line for the selected tower.",
+    "placeholders": {
+      "towerType": {"type": "String"},
+      "level": {"type": "int"}
+    }
+  },
+  "upgradeTooltip": "Upgrade to Lv {level}",
+  "@upgradeTooltip": {
+    "placeholders": {"level": {"type": "int"}}
+  },
+  "maxLevelTooltip": "Max level",
+  "closeTooltip": "Close"
+}

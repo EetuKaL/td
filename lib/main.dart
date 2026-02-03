@@ -1,6 +1,7 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:td/l10n/generated/app_localizations.dart';
 import 'package:td/state/game_bloc/game_bloc.dart';
 import 'package:td/overlays/debug_overlay.dart';
 import 'package:td/overlays/tower_options_overlay.dart';
@@ -22,6 +23,8 @@ class _TDApp extends StatelessWidget {
           final game = TDGame(gameBloc: context.read<GameBloc>());
 
           return MaterialApp(
+            supportedLocales: S.supportedLocales,
+            localizationsDelegates: S.localizationsDelegates,
             debugShowCheckedModeBanner: false,
             home: GameWidget<TDGame>.controlled(
               gameFactory: () => game,
