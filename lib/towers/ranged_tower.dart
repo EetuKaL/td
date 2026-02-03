@@ -57,8 +57,6 @@ abstract class RangedTower extends Tower with HasGameReference<TDGame> {
     await _ensureShootPool();
   }
 
-  
-
   @override
   void update(double dt) {
     super.update(dt);
