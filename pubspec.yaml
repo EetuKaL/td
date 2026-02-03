@@ -19,6 +19,9 @@ dependencies:
   flame: ^1.34.0
   flame_audio: ^2.11.12
   flame_tiled: ^3.0.9
+  flame_bloc: ^1.12.20
+  flutter_bloc: ^9.1.1
+  bloc: ^9.2.0
 
 dev_dependencies:
   flutter_test:

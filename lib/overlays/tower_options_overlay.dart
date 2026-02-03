@@ -1,9 +1,10 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flame/sprite.dart';
+import 'package:td/state/game_bloc/game_bloc.dart';
 import 'package:td/td.dart';
-import 'package:td/towers/tower.dart';
 
 class TowerOptionsOverlay extends StatelessWidget {
   final TDGame game;
@@ -14,12 +15,10 @@ class TowerOptionsOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<Tower?>(
-      valueListenable: game.selectedTowerNotifier,
-      builder: (context, tower, _) {
-        if (tower == null) {
-          return const SizedBox.shrink();
-        }
+    return BlocBuilder<GameBloc, GameState>(
+      builder: (context, state) {
+        final tower = state.selectedTower;
+        if (tower == null) return const SizedBox.shrink();
 
         return Align(
           alignment: Alignment.bottomCenter,
@@ -53,13 +52,18 @@ class TowerOptionsOverlay extends StatelessWidget {
                       ),
                     ),
                   ),
-                  ElevatedButton(
+                  IconButton(
                     onPressed: tower.isAtMaxLevel
                         ? null
                         : () async {
+                            final bloc = context.read<GameBloc>();
                             await tower.levelUp();
+                            bloc.add(const RefreshSelectedTower());
                           },
-                    child: Text(tower.isAtMaxLevel ? 'Max' : 'Upgrade'),
+                    icon: const Icon(Icons.upgrade, color: Colors.white),
+                    tooltip: tower.isAtMaxLevel
+                        ? 'Max level'
+                        : 'Upgrade to Lv ${tower.level + 1}',
                   ),
                   const SizedBox(width: 8),
                   IconButton(
