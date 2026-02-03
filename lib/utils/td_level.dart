@@ -64,7 +64,7 @@ class TDLevel extends Component with HasGameReference {
     }
 
     final grid = TowerPlacementGrid(
-      gridCellSize: scale * 2 * gridCellBase,
+      gridCellSize: scale * 2 * TowerPlacementGrid.gridCellBase,
       mapSize: (tiledComponent.size * scale).toSize(),
       offZoneAreas: offZoneAreas,
     );
