@@ -2,6 +2,7 @@ import 'package:flame/components.dart';
 import 'package:td/towers/ranged_tower.dart';
 
 class Cannon extends RangedTower {
+  static final Vector2 _kSpriteOffset = Vector2(0, -12);
   Cannon({
     required super.position,
     required super.size,
@@ -22,5 +23,5 @@ class Cannon extends RangedTower {
   }
 
   @override
-  Vector2 get placementOffset => Vector2(0, -12);
+  Vector2 get spriteOffset => _kSpriteOffset;
 }

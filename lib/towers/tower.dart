@@ -92,13 +92,14 @@ abstract class Tower extends SpriteComponent {
   final List<String> _attackSound;
   String get attackSound => _attackSound[min(_level, _attackSound.length) - 1];
 
-  /// Additional world-space offset applied when placing on the grid.
+  /// Local-space offset applied only when rendering the sprite.
   ///
-  /// Useful when the PNG art has extra transparent padding or the "visual"
-  /// center of the tower isn't the geometric center of the image.
+  /// This lets you tune per-sprite alignment without affecting gameplay logic
+  /// like targeting origin, range circles, or grid cell occupancy.
   ///
-  /// Offset is applied after `placementAnchor` is set.
-  Vector2 get placementOffset => Vector2.zero();
+  /// Values are in the tower's local coordinate system (pixels at current
+  /// component scale).
+  Vector2 get spriteOffset => Vector2.zero();
 
   Tower({
     required this.name,
@@ -146,7 +147,15 @@ abstract class Tower extends SpriteComponent {
 
   @override
   void render(Canvas canvas) {
-    super.render(canvas);
+    final offset = spriteOffset;
+    if (offset.x != 0 || offset.y != 0) {
+      canvas.save();
+      canvas.translate(offset.x, offset.y);
+      super.render(canvas);
+      canvas.restore();
+    } else {
+      super.render(canvas);
+    }
 
     if (showRadius) {
       final paint = Paint()
