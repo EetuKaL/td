@@ -1,63 +1,32 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flame/components.dart';
-import 'package:flame/extensions.dart';
 import 'package:td/td.dart';
 import 'package:td/utils/health_bar.dart';
 
-class Enemy extends SpriteAnimationComponent with HasGameReference<TDGame> {
-  late final List<Vector2> _path;
+/// Unit is movable game object that basically can only die.
+/// Everything else is implement in ability mixins.
+class Unit extends SpriteAnimationComponent with HasGameReference<TDGame> {
   double _hp;
   final double _maxHp;
-  final double speed;
-  final double range;
-  late final Offset trajectoryOffset;
 
   double get hp => _hp;
   double get maxHp => _maxHp;
 
-  Enemy({
+  Unit({
     super.key,
-    required List<Vector2> path,
     required double hp,
-    required this.speed,
-    required this.range,
     required Vector2 position,
     required Vector2 size,
+    Anchor? anchor,
   }) : _hp = hp,
        _maxHp = hp,
-       super(position: position, size: size, anchor: Anchor.center) {
-    _path = List.from(path);
-
-    trajectoryOffset = Offset(
-      Random().nextDoubleBetween(-32, 32),
-      Random().nextDoubleBetween(-32, 32),
-    );
-  }
+       super(position: position, size: size, anchor: anchor ?? Anchor.center);
 
   @override
   FutureOr<void> onLoad() async {
     await super.onLoad();
     await add(HealthBar(current: () => hp, max: () => maxHp));
-  }
-
-  void moveAlongTrajectory(double dt) {
-    if (!isOnRoad() || _path.isEmpty) {
-      // Handle off-road behavior, e.g., slow down or stop
-      return;
-    }
-    // Logic to move the enemy along its trajectory based on speed and dt
-    final offsetAdjusted = Vector2(
-      _path.first.x + trajectoryOffset.dx,
-      _path.first.y + trajectoryOffset.dy,
-    );
-    final direction = (offsetAdjusted - position).normalized();
-    position += direction * speed * dt;
-    if ((position - offsetAdjusted).length < range) {
-      _path.removeAt(0);
-      // Reached the target point
-    }
   }
 
   void takeHit(double damage) {
@@ -105,17 +74,4 @@ class Enemy extends SpriteAnimationComponent with HasGameReference<TDGame> {
     }
     return nearestPoint!;
   } */
-
-  bool isOnRoad() {
-    return game.level.road.containsPoint(position);
-  }
-
-  @override
-  void update(double dt) {
-    if (canMove && _path.isNotEmpty) {
-      moveAlongTrajectory(dt);
-    }
-
-    super.update(dt);
-  }
 }

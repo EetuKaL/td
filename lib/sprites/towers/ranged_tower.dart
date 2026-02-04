@@ -4,11 +4,13 @@ import 'dart:math' as math;
 import 'package:flame/components.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame_audio/flame_audio.dart';
-import 'package:td/enemies/enemy.dart';
+import 'package:td/sprites/abilities/attack_ability.dart';
+import 'package:td/sprites/unit/unit.dart';
 import 'package:td/td.dart';
-import 'package:td/towers/tower.dart';
+import 'package:td/sprites/towers/tower.dart';
 
-abstract class RangedTower extends Tower with HasGameReference<TDGame> {
+abstract class RangedTower extends Tower
+    with HasGameReference<TDGame>, AttackAbility {
   // How much aim can be off
   final double aimTolerance;
 
@@ -39,8 +41,6 @@ abstract class RangedTower extends Tower with HasGameReference<TDGame> {
   /// Override to speed up/slow down attack animation.
   double get shootFrameSeconds => 1 / 20;
 
-  double _cooldownSeconds = 0.0;
-
   AudioPool? _shootPool;
   String? _shootPoolAsset;
   Future<AudioPool>? _shootPoolFuture;
@@ -63,93 +63,25 @@ abstract class RangedTower extends Tower with HasGameReference<TDGame> {
 
     _updateShootAnimation(dt);
 
-    final target = findTarget();
+    // Keep ability fields in sync with tower stats.
+    attackDamage = damage;
+    attackFireRate = fireRate;
+    attackSpotDistance = spotDistance;
+    attackAimTolerance = aimTolerance;
+    attackTurnSpeed = turnSpeed;
+    attackIdleAngle = idleAngle;
 
-    // Track desired aim so we can gate firing when turn speed is finite.
-    double? desiredAimAngle;
-    var isTargetExactlyOnTower = false;
+    updateAttack(dt);
+  }
 
-    if (target != null) {
-      final dir = target.position - position;
-      if (dir.length2 > 0) {
-        desiredAimAngle = dir.screenAngle();
-        _turnTowards(desiredAimAngle, dt);
-      } else {
-        // Same position: direction is undefined, but we should still allow
-        // shooting.
-        isTargetExactlyOnTower = true;
-      }
-    } else {
-      _turnTowards(idleAngle, dt);
-    }
-
-    if (_cooldownSeconds > 0) {
-      _cooldownSeconds -= dt;
-      return;
-    }
-
-    if (target == null) return;
-
-    // If the enemy has a defined direction, only shoot when we're aimed.
-    if (!isTargetExactlyOnTower && desiredAimAngle != null) {
-      if (!_isAimedAt(desiredAimAngle)) {
-        return;
-      }
-    }
-
+  @override
+  bool canAttack(Unit target) {
     // Ensure audio pool is ready (non-async update loop).
     if (_shootPool == null || _shootPoolAsset != attackSound) {
       unawaited(_ensureShootPool());
-      return;
+      return false;
     }
-
-    shoot(target);
-    _cooldownSeconds = fireRate;
-  }
-
-  void _turnTowards(double targetAngle, double dt) {
-    final speed = turnSpeed;
-    if (speed.isInfinite || speed <= 0 || dt <= 0) {
-      angle = targetAngle;
-      return;
-    }
-
-    final maxDelta = speed * dt;
-    angle = _moveAngleTowards(angle, targetAngle, maxDelta);
-  }
-
-  double _moveAngleTowards(double current, double target, double maxDelta) {
-    final c = _normalizeAngle(current);
-    final t = _normalizeAngle(target);
-    final diff = _normalizeAngle(t - c);
-
-    if (diff.abs() <= maxDelta) {
-      return t;
-    }
-
-    final stepped = c + diff.sign * maxDelta;
-    return _normalizeAngle(stepped);
-  }
-
-  double _normalizeAngle(double radians) {
-    var a = radians;
-    // Normalize to (-pi, pi]
-    while (a <= -math.pi) {
-      a += 2 * math.pi;
-    }
-    while (a > math.pi) {
-      a -= 2 * math.pi;
-    }
-    return a;
-  }
-
-  bool _isAimedAt(double targetAngle) {
-    final tolerance = aimTolerance;
-    if (tolerance.isNaN || tolerance.isNegative) {
-      return true;
-    }
-    final diff = _normalizeAngle(_normalizeAngle(targetAngle) - angle);
-    return diff.abs() <= tolerance;
+    return true;
   }
 
   @override
@@ -160,10 +92,12 @@ abstract class RangedTower extends Tower with HasGameReference<TDGame> {
   }
 
   /// Override for custom targeting logic.
-  Enemy? findTarget() => _findNearestInSpotDistance();
+  @override
+  Unit? findTarget() => _findNearestInSpotDistance();
 
   /// Override for custom attack behavior (projectiles, AOE, etc).
-  void shoot(Enemy target) {
+  @override
+  void attack(Unit target) {
     _startShootAnimation();
     _shootPool?.start();
 
@@ -175,7 +109,7 @@ abstract class RangedTower extends Tower with HasGameReference<TDGame> {
       ttlSeconds: 0.5,
     );
 
-    target.takeHit(damage);
+    target.takeHit(attackDamage);
   }
 
   void _rebuildShootFrames() {
@@ -262,12 +196,12 @@ abstract class RangedTower extends Tower with HasGameReference<TDGame> {
     _shootPool = await _shootPoolFuture!;
   }
 
-  Enemy? _findNearestInSpotDistance() {
-    Enemy? best;
+  Unit? _findNearestInSpotDistance() {
+    Unit? best;
     var bestDistance2 = double.infinity;
 
     final origin = position;
-    final radius = spotDistance;
+    final radius = attackSpotDistance;
     final radius2 = radius * radius;
 
     for (final enemy in game.enemyIndex.queryRadius(origin, radius)) {

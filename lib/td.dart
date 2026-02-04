@@ -7,11 +7,11 @@ import 'package:flame/game.dart';
 import 'package:flame_tiled/flame_tiled.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:td/enemies/zombie.dart';
+import 'package:td/sprites/unit/units/zombie.dart';
 import 'package:td/state/game_bloc/game_bloc.dart';
-import 'package:td/enemies/enemy.dart';
-import 'package:td/towers/ranged/cannon.dart';
-import 'package:td/towers/tower.dart';
+import 'package:td/sprites/unit/unit.dart';
+import 'package:td/sprites/towers/ranged/cannon.dart';
+import 'package:td/sprites/towers/tower.dart';
 import 'package:td/utils/debug_beam_data.dart';
 import 'package:td/utils/debug_flags.dart';
 import 'package:td/utils/debug_line_drawer.dart';
@@ -29,7 +29,7 @@ class TDGame extends FlameGame
   final GameBloc gameBloc;
 
   final List<Tower> towers = [];
-  final List<Enemy> enemies = [];
+  final List<Unit> enemies = [];
 
   final Map<String, Tower> _occupiedCells = {};
   late final Timer spawnTimer;
@@ -40,12 +40,12 @@ class TDGame extends FlameGame
   /// Spatial index used by towers to query nearby enemies.
   late final EnemySpatialIndex enemyIndex;
 
-  void removeEnemy(Enemy enemy) {
+  void removeEnemy(Unit enemy) {
     enemies.remove(enemy);
     enemy.removeFromParent();
   }
 
-  void addEnemy(Enemy enemy) {
+  void addEnemy(Unit enemy) {
     enemies.add(enemy);
     world.add(enemy);
   }

@@ -1,4 +1,4 @@
-import 'package:td/towers/tower_man/tower_man.dart';
+import 'package:td/sprites/towers/tower_man/tower_man.dart';
 
 class SwordMan extends TowerMan {
   SwordMan({required super.position, required super.size});
