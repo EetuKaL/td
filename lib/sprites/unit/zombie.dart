@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'package:flame/components.dart';
-import 'package:td/enemies/enemy.dart';
+import 'package:td/sprites/unit/units/enemy.dart';
 
 class Zombie extends Enemy {
   static Map<String, SpriteAnimation> animationCache = {};
@@ -10,22 +10,29 @@ class Zombie extends Enemy {
   bool _hurting = false;
 
   Zombie({
-    required super.position,
-    required super.size,
-    required super.path,
-    super.hp = 100,
-    super.speed = 10,
-    super.range = 5,
-  }) {
+    required Vector2 position,
+    required Vector2 size,
+    required List<Vector2> path,
+    double hp = 100,
+    double speed = 10,
+    double range = 5,
+  }) : super(
+         position: position,
+         size: size,
+         path: path,
+         hp: hp,
+         speed: speed,
+         range: range,
+       ) {
     variant = Random().nextInt(4) + 1;
     anchor = Anchor.bottomCenter;
   }
 
-  late final SpriteAnimation walk;
-  late final SpriteAnimation hurt;
-  late final SpriteAnimation death;
-  late final SpriteAnimation attack;
-  late final SpriteAnimation idle;
+  late final SpriteAnimation aWalk;
+  late final SpriteAnimation aHurt;
+  late final SpriteAnimation aDeath;
+  late final SpriteAnimation aAttack;
+  late final SpriteAnimation aIdle;
 
   @override
   bool get canMove => !_dying && !_hurting;
@@ -34,11 +41,11 @@ class Zombie extends Enemy {
   void onDamaged(double damage) {
     if (_dying || _hurting || !isLoaded) return;
     _hurting = true;
-    animation = hurt;
+    animation = aHurt;
     animationTicker?.reset();
     animationTicker?.onComplete = () {
       _hurting = false;
-      if (!_dying) animation = walk;
+      if (!_dying) animation = aWalk;
     };
   }
 
@@ -53,7 +60,7 @@ class Zombie extends Enemy {
       return;
     }
 
-    animation = death;
+    animation = aDeath;
     animationTicker?.reset();
     animationTicker?.onComplete = removeNow;
   }
@@ -62,7 +69,7 @@ class Zombie extends Enemy {
   Future<void> onLoad() async {
     await super.onLoad();
 
-    walk = animationCache['variant_${variant}_walk'] ??=
+    aWalk = animationCache['variant_${variant}_walk'] ??=
         await Sprite.load('enemies/zombie/variant_$variant/Walk.png').then((
           sprite,
         ) {
@@ -76,9 +83,9 @@ class Zombie extends Enemy {
           );
         });
 
-    animation = walk;
+    animation = aWalk;
 
-    hurt = animationCache['variant_${variant}_hurt'] ??=
+    aHurt = animationCache['variant_${variant}_hurt'] ??=
         await Sprite.load('enemies/zombie/variant_$variant/Hurt.png').then(
           (sprite) => SpriteAnimation.fromFrameData(
             sprite.image,
@@ -91,7 +98,7 @@ class Zombie extends Enemy {
           ),
         );
 
-    death = animationCache['variant_${variant}_death'] ??=
+    aDeath = animationCache['variant_${variant}_death'] ??=
         await Sprite.load('enemies/zombie/variant_$variant/Dead.png').then(
           (sprite) => SpriteAnimation.fromFrameData(
             sprite.image,
@@ -104,7 +111,7 @@ class Zombie extends Enemy {
           ),
         );
 
-    attack = animationCache['variant_${variant}_attack'] ??=
+    aAttack = animationCache['variant_${variant}_attack'] ??=
         await Sprite.load('enemies/zombie/variant_$variant/Attack.png').then(
           (sprite) => SpriteAnimation.fromFrameData(
             sprite.image,
@@ -116,7 +123,7 @@ class Zombie extends Enemy {
             ),
           ),
         );
-    idle = animationCache['variant_${variant}_idle'] ??=
+    aIdle = animationCache['variant_${variant}_idle'] ??=
         await Sprite.load('enemies/zombie/variant_$variant/Idle.png').then(
           (sprite) => SpriteAnimation.fromFrameData(
             sprite.image,

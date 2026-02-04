@@ -1,5 +1,5 @@
-import 'package:td/towers/tower.dart';
-import 'package:td/towers/tower_man/tower_man.dart';
+import 'package:td/sprites/towers/tower.dart';
+import 'package:td/sprites/towers/tower_man/tower_man.dart';
 
 abstract class MannedTower extends Tower {
   final List<TowerMan> crew;

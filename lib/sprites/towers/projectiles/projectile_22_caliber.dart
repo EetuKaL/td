@@ -1,4 +1,4 @@
-import 'package:td/towers/projectiles/projectile.dart';
+import 'package:td/sprites/towers/projectiles/projectile.dart';
 
 class Projectile22Caliber extends Projectile {
   Projectile22Caliber({required super.speed})

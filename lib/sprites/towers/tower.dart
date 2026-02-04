@@ -6,7 +6,7 @@ import 'package:flame/components.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame/flame.dart';
 import 'package:flame/sprite.dart';
-import 'package:td/towers/tower_type.dart';
+import 'package:td/sprites/towers/tower_type.dart';
 import 'package:td/utils/debug_flags.dart';
 
 abstract class Tower extends SpriteComponent {

@@ -1,4 +1,4 @@
-import 'package:td/towers/tower.dart';
+import 'package:td/sprites/towers/tower.dart';
 
 class GameState {
   const GameState({this.selectedTower});

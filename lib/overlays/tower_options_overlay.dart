@@ -7,7 +7,7 @@ import 'package:td/l10n/generated/app_localizations.dart';
 
 import 'package:td/state/game_bloc/game_bloc.dart';
 import 'package:td/td.dart';
-import 'package:td/towers/tower_type.dart';
+import 'package:td/sprites/towers/tower_type.dart';
 
 class TowerOptionsOverlay extends StatelessWidget {
   final TDGame game;

@@ -1,8 +1,8 @@
 import 'dart:math';
 
 import 'package:flame/components.dart';
-import 'package:td/towers/ranged_tower.dart';
-import 'package:td/towers/tower_type.dart';
+import 'package:td/sprites/towers/ranged_tower.dart';
+import 'package:td/sprites/towers/tower_type.dart';
 
 class Cannon extends RangedTower {
   static final Vector2 _kSpriteOffset = Vector2(0, -12);
