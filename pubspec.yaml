@@ -45,11 +45,12 @@ flutter:
     - assets/images/enemies/zombie/variant_3/
     - assets/images/enemies/zombie/variant_4/
     - assets/images/hud/level/
+    - assets/images/swat/
     - assets/images/
     - assets/audio/towers/
     - assets/audio/towers/cannon/
     - assets/tiles/
-    - assets/tiles/testLevel/ 
+    - assets/tiles/testLevel/
 
 
 
